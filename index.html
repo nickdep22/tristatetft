@@ -133,6 +133,49 @@ td { padding:0.65rem 1rem; font-size:0.875rem; vertical-align:middle; }
 .lr-mult { font-size:0.62rem; color:var(--gray-400); font-family:'IBM Plex Mono',monospace; }
 @media(max-width:700px) { .header-stats{display:none} .main{padding:1rem} td{padding:0.5rem 0.6rem} }
 
+/* ── ACHIEVEMENTS ─────────────────────────────────────────────────────────── */
+.ach-badge {
+  display:inline-flex; align-items:center; gap:0.25rem;
+  font-family:'IBM Plex Mono',monospace; font-size:0.52rem; font-weight:600;
+  letter-spacing:0.04em; text-transform:uppercase;
+  padding:0.15rem 0.45rem; border-radius:3px; white-space:nowrap;
+  cursor:default; border:1px solid transparent;
+}
+.ach-common    { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
+.ach-uncommon  { background:#f0fdf4; color:#166534; border-color:#86efac; }
+.ach-rare      { background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
+.ach-epic      { background:#fdf4ff; color:#7e22ce; border-color:#d8b4fe; }
+.ach-legendary { background:#fefce8; color:#854d0e; border-color:#fbbf24; }
+
+.ach-grid {
+  display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem;
+}
+.ach-locked {
+  opacity:0.25; filter:grayscale(1);
+}
+/* Tooltip */
+[data-tooltip] { position:relative; }
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  background:var(--navy); color:var(--white);
+  font-family:'IBM Plex Mono',monospace; font-size:0.6rem; font-weight:400;
+  letter-spacing:0.03em; white-space:nowrap;
+  padding:0.3rem 0.6rem; border-radius:3px; z-index:100;
+  pointer-events:none;
+}
+[data-tooltip]:hover::before {
+  content:''; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%);
+  border:5px solid transparent; border-top-color:var(--navy); z-index:100;
+  pointer-events:none;
+}
+.ach-section { margin-bottom:1.5rem; }
+.ach-category-label {
+  font-family:'IBM Plex Mono',monospace; font-size:0.58rem;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--gray-400);
+  margin-bottom:0.4rem; margin-top:0.75rem;
+}
+
 /* ── MAIN GRID LAYOUT ─────────────────────────────────────────────────────── */
 .main-grid {
   display:grid;
@@ -478,7 +521,7 @@ tbody tr:hover td:nth-child(2) .player-name { color:var(--gold); }
   </div>
   <div class="formula-card" style="margin-bottom:2rem">
     <div class="formula-item"><strong>Base Points</strong><br>1st:+40 · 2nd:+30 · 3rd:+20 · 4th:+10<br>5th:−10 · 6th:−20 · 7th:−30 · 8th:−40</div>
-    <div class="formula-item"><strong>Lobby Multiplier</strong><br>Diff = Player EffRating − Avg of lobby opponents<br>Mult = clamp(1 − Diff/700, 0.65×, 2.0×)</div>
+    <div class="formula-item"><strong>Lobby Multiplier</strong><br>Diff = Player EffRating − Avg of lobby opponents<br>Gains: clamp(1 − Diff/1200, 0.65×, 2.0×)<br>Losses: clamp(1 + Diff/1200, 0.65×, 1.4×)</div>
     <div class="formula-item"><strong>Confidence</strong><br>conf = min(games / 10, 1.0)<br>EffRating = conf × Rating + (1−conf) × 1000</div>
     <div class="formula-item"><strong>Starting Rating</strong><br>1000 for all players<br>10+ games = Established</div>
   </div>
@@ -1130,9 +1173,11 @@ function computeGlobal() {
           const others = active.filter(p => p !== name);
           const lobbyAvg = others.length ? others.reduce((s, p) => s + eff(p), 0) / others.length : BASELINE;
           const diff = eff(name) - lobbyAvg;
-          const mult = Math.max(0.65, Math.min(2.0, 1 - diff / 700));
+          const mult = base >= 0
+            ? Math.max(0.65, Math.min(2.0, 1 - diff / 1200))   // gains:  underdog rewarded, favorite tempered
+            : Math.max(0.65, Math.min(1.4, 1 + diff / 1200));   // losses: underdog forgiven, favorite punished
           const earned = Math.round(base * mult);
-          pending.push({ g, ln, tKey: t.key, tournName: t.name, name, placement, base, mult: +mult.toFixed(3), earned });
+          pending.push({ g, ln, tKey: t.key, tournName: t.name, name, placement, base, mult: +mult.toFixed(3), earned, diff: +diff.toFixed(1) });
         });
       }
       pending.forEach(e => { globalSt[e.name].rating += e.earned; globalSt[e.name].games += 1; globalSt[e.name].history.push(e); });
@@ -1143,6 +1188,76 @@ function computeGlobal() {
 }
 
 const { globalSt, allLogs } = computeGlobal();
+
+// ══════════════════════════════════════════════════════
+// ACHIEVEMENT ENGINE
+// ══════════════════════════════════════════════════════
+const ACHIEVEMENTS = {
+  first_blood:    { name:'First Blood',    icon:'🩸', desc:'Won your first game',                                          rarity:'common'    },
+  hat_trick:      { name:'Hat Trick',      icon:'🎩', desc:'Won 3 or more games',                                          rarity:'common'    },
+  hot_streak:     { name:'Hot Streak',     icon:'🔥', desc:'Top 4 in 5 consecutive games',                                 rarity:'uncommon'  },
+  clean_sweep:    { name:'Clean Sweep',    icon:'🧹', desc:'Top 4 in every game of a single tournament (min 3)',           rarity:'uncommon'  },
+  consistent:     { name:'Consistent',     icon:'📊', desc:'Top 4 rate of 70%+ across 15+ games',                         rarity:'rare'      },
+  elite:          { name:'Elite',          icon:'⚡', desc:'Reached 1300 ELO',                                             rarity:'rare'      },
+  untouchable:    { name:'Untouchable',    icon:'👑', desc:'Reached 1500 ELO',                                             rarity:'legendary' },
+  giant_slayer:   { name:'Giant Slayer',   icon:'🗡️', desc:'Won a game while 500+ ELO below the lobby average',           rarity:'legendary' },
+};
+const RARITY_ORDER = ['common','uncommon','rare','epic','legendary'];
+
+function computeAchievements(name, d) {
+  const hist = d.history;
+  if (!hist.length) return [];
+  const earned = new Set();
+  const placements = hist.map(h => h.placement);
+  const byTourn = {};
+  hist.forEach(h => { (byTourn[h.tKey] = byTourn[h.tKey] || []).push(h); });
+
+  // Wins
+  const wins = placements.filter(p => p === 1).length;
+  if (wins >= 1) earned.add('first_blood');
+  if (wins >= 3) earned.add('hat_trick');
+
+  // Streaks
+  for (let i = 0; i <= placements.length - 5; i++)
+    if (placements.slice(i, i+5).every(p => p <= 4)) { earned.add('hot_streak'); break; }
+
+  // Per-tournament
+  for (const games of Object.values(byTourn)) {
+    if (games.length >= 3 && games.every(h => h.placement <= 4))
+      earned.add('clean_sweep');
+  }
+
+  // Consistency
+  if (hist.length >= 15 && placements.filter(p => p <= 4).length / hist.length >= 0.7)
+    earned.add('consistent');
+
+  // ELO milestones
+  let run = BASELINE;
+  for (const h of hist) {
+    run += h.earned;
+    if (run >= 1300) earned.add('elite');
+    if (run >= 1500) earned.add('untouchable');
+  }
+
+  // Special
+  for (const h of hist)
+    if (h.placement === 1 && h.diff < -500) { earned.add('giant_slayer'); break; }
+
+  return [...earned];
+}
+
+// Pre-compute all achievements
+const ALL_ACHIEVEMENTS = {};
+Object.entries(globalSt).forEach(([name, d]) => {
+  ALL_ACHIEVEMENTS[name] = computeAchievements(name, d);
+});
+
+function renderAchievementBadge(key, locked=false) {
+  const a = ACHIEVEMENTS[key];
+  if (!a) return '';
+  const cls = `ach-badge ach-${a.rarity}${locked ? ' ach-locked' : ''}`;
+  return `<span class="${cls}" data-tooltip="${a.desc}">${a.icon} ${a.name}</span>`;
+}
 
 // Derive per-tournament state and logs by slicing global history.
 // Each tournament view shows: ratings as of the END of that tournament,
@@ -1347,6 +1462,7 @@ function renderLeaderboard() {
     const rank = rankMap[p.name];
     const rc = rank <= 3 ? `rank-${rank}` : '';
     const badge = p.games < 10 ? `<span class="prov-badge badge-p">Provisional</span>` : '';
+
     const [nm, tg] = p.name.includes('#') ? [p.name.split('#')[0], '#'+p.name.split('#')[1]] : [p.name, ''];
 
     // Last 5 placements
@@ -1453,6 +1569,7 @@ function openProfile(playerName) {
 
   const hist = d.history; // all game entries globally
   const totalGames = hist.length;
+  const playerAchs = ALL_ACHIEVEMENTS[playerName] || [];
   if (!totalGames) return;
 
   // ── Basic stats ─────────────────────────────────────
@@ -1495,12 +1612,12 @@ function openProfile(playerName) {
   placements.forEach(p => dist[p-1]++);
   const maxDist = Math.max(...dist, 1);
 
-  // ── Stat rank badges (where does this player rank globally for each stat) ──
+  // ── Stat rank badges — uses same 15-game pool as stat leaders panel ──────
   const qualified = Object.entries(globalSt)
     .map(([n, d]) => {
       const h = d.history;
       const games = h.length;
-      if (games < 1) return null;
+      if (games < 15) return null;
       const ps = h.map(e => e.placement);
       return { n, rating: Math.round(d.rating), avg: ps.reduce((s,p) => s+p,0)/games, top4: ps.filter(p=>p<=4).length/games };
     }).filter(Boolean);
@@ -1509,9 +1626,13 @@ function openProfile(playerName) {
   const avgRank  = qualified.sort((a,b) => a.avg   - b.avg  ).findIndex(x => x.n === playerName) + 1;
   const top4Rank = qualified.sort((a,b) => b.top4  - a.top4 ).findIndex(x => x.n === playerName) + 1;
 
-  const rankPill = (r) => r <= 3
-    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;background:var(--gold);color:var(--navy);padding:0.1rem 0.4rem;border-radius:2px">${r === 1 ? '1st' : r === 2 ? '2nd' : '3rd'}</span>`
-    : `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;font-weight:600;letter-spacing:0.06em;background:var(--gray-100);color:var(--gray-600);padding:0.1rem 0.4rem;border-radius:2px">#${r}</span>`;
+  // If player isn't in the qualified pool (< 15 games), don't show a rank pill
+  const rankPill = (r) => {
+    if (r === 0) return '';
+    return r <= 3
+      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;background:var(--gold);color:var(--navy);padding:0.1rem 0.4rem;border-radius:2px">${r === 1 ? '1st' : r === 2 ? '2nd' : '3rd'}</span>`
+      : `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;font-weight:600;letter-spacing:0.06em;background:var(--gray-100);color:var(--gray-600);padding:0.1rem 0.4rem;border-radius:2px">#${r}</span>`;
+  };
   const aliases = ALL_ALIASES[playerName];
   const akaStr = aliases && aliases.size > 0
     ? 'aka ' + [...aliases].join(', ')
@@ -1573,6 +1694,63 @@ function openProfile(playerName) {
       <td><div class="tr-placement-dots">${dots}</div></td>
     </tr>`;
   }).join('');
+
+  // ── Matchups ────────────────────────────────────────────
+  // For each opponent ever shared a lobby with, track avg placement delta
+  // vs their avg placement when NOT in a lobby together
+  const matchupMap = {}; // opponent → [placements when sharing a lobby]
+  allLogs.forEach(log => {
+    const entry = log.entries.find(e => e.name === playerName);
+    if (!entry) return;
+    const lobbyEntries = log.entries.filter(e => e.ln === entry.ln && e.name !== playerName);
+    lobbyEntries.forEach(opp => {
+      if (!matchupMap[opp.name]) matchupMap[opp.name] = [];
+      matchupMap[opp.name].push(entry.placement);
+    });
+  });
+
+  // Overall avg placement
+  const overallAvg = placements.reduce((s,p) => s+p, 0) / placements.length;
+
+  // For each opponent with 3+ shared games, compute avg placement delta vs overall
+  const matchups = Object.entries(matchupMap)
+    .filter(([opp, ps]) => ps.length >= 5)
+    .map(([opp, ps]) => {
+      const avg = ps.reduce((s,p) => s+p, 0) / ps.length;
+      const delta = avg - overallAvg; // positive = worse when they're around
+      const [oppNm] = opp.includes('#') ? [opp.split('#')[0]] : [opp];
+      return { opp, oppNm, avg: +avg.toFixed(2), delta: +delta.toFixed(2), games: ps.length };
+    })
+    .sort((a,b) => a.delta - b.delta); // best first (lowest placement = best)
+
+  const bestFriend = matchups.slice(0, 3); // place better around them
+  const kryptonite = matchups.slice(-3).reverse(); // place worse around them
+
+  const matchupRow = (m, type) => {
+    const isGood = type === 'friend';
+    const sign = m.delta >= 0 ? '+' : '';
+    const col = isGood ? 'color:#16a34a' : 'color:#dc2626';
+    return `<div style="display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.75rem;border-bottom:1px solid var(--gray-50)">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;flex:1;color:var(--navy)">${m.oppNm}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--gray-400)">${m.games}g together</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;${col}">${sign}${m.delta} avg</span>
+    </div>`;
+  };
+
+  const matchupHTML = matchups.length < 2 ? '' : `
+      <div class="profile-section">
+        <div class="profile-section-title"><span>Matchups</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:400;color:var(--gray-400)">min. 5 shared games</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);padding:0.4rem 0.75rem;background:var(--gray-50);border-bottom:1px solid var(--gray-100)">🤝 Best Matchup</div>
+            ${bestFriend.map(m => matchupRow(m, 'friend')).join('')}
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);padding:0.4rem 0.75rem;background:var(--gray-50);border-bottom:1px solid var(--gray-100)">😤 Kryptonite</div>
+            ${kryptonite.map(m => matchupRow(m, 'krypto')).join('')}
+          </div>
+        </div>
+      </div>`;
 
   // ── Assemble HTML ─────────────────────────────────────
   document.getElementById('profileContent').innerHTML = `
@@ -1641,6 +1819,23 @@ function openProfile(playerName) {
           </tr></thead>
           <tbody>${tRows}</tbody>
         </table>
+      </div>
+
+      ${matchupHTML}
+        <div class="profile-section-title"><span>Achievements</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:400;color:var(--gray-400)">${playerAchs.length} / ${Object.keys(ACHIEVEMENTS).length} unlocked</span></div>
+        ${(() => {
+          const categories = [
+            { label: 'Common',    keys: ['first_blood','hat_trick'] },
+            { label: 'Uncommon',  keys: ['hot_streak','clean_sweep'] },
+            { label: 'Rare',      keys: ['consistent','elite'] },
+            { label: 'Legendary', keys: ['untouchable','giant_slayer'] },
+          ];
+          return categories.map(cat => `
+            <div class="ach-category-label">${cat.label}</div>
+            <div class="ach-grid">
+              ${cat.keys.map(k => renderAchievementBadge(k, !playerAchs.includes(k))).join('')}
+            </div>`).join('');
+        })()}
       </div>
 
     </div>`;
