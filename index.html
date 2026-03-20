@@ -58,7 +58,7 @@ tbody tr:last-child { border-bottom:none; }
 td { padding:0.65rem 1rem; font-size:0.875rem; vertical-align:middle; }
 .rank-col { width:48px; text-align:center; }
 .rank-num { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; color:var(--gray-400); }
-.rank-1 .rank-num { color:var(--gold); }
+.rank-1 .rank-num { color:var(--accent); }
 .rank-2 .rank-num { color:var(--gray-400); }
 .rank-3 .rank-num { color:#c27c2f; }
 .rank-1 td:first-child { border-left:3px solid var(--gold); }
@@ -91,8 +91,8 @@ td { padding:0.65rem 1rem; font-size:0.875rem; vertical-align:middle; }
 .badge-p { background:#ede9fe; color:#6d28d9; border:1px solid #c4b5fd; }
 
 /* ── PODIUM ── */
-.podium-wrap { display:grid; grid-template-columns:1fr 1.12fr 1fr; gap:0; margin:1.5rem 0 2rem; align-items:end; }
-.podium-card { display:flex; flex-direction:column; align-items:center; padding:1.5rem 1rem 0; position:relative; cursor:pointer; }
+.podium-wrap { display:grid; grid-template-columns:1fr 1.12fr 1fr; gap:0; margin:0.5rem 0 2rem; align-items:end; }
+.podium-card { display:flex; flex-direction:column; align-items:center; padding:0.75rem 1rem 0; position:relative; cursor:pointer; }
 .podium-card.p1 { order:2; }
 .podium-card.p2 { order:1; }
 .podium-card.p3 { order:3; }
@@ -102,8 +102,8 @@ td { padding:0.65rem 1rem; font-size:0.875rem; vertical-align:middle; }
 .podium-rating { font-family:'IBM Plex Mono',monospace; font-size:0.72rem; font-weight:400; color:var(--gray-400); margin-bottom:0.75rem; letter-spacing:0.05em; }
 .podium-step { width:100%; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:0.05em; }
 .podium-card.p1 .podium-name { color:var(--navy); font-size:2.6rem; font-weight:700; }
-.podium-card.p1 .podium-step { background:var(--navy); color:var(--gold); height:72px; }
-.podium-card.p2 .podium-step { background:var(--gray-200); color:var(--white); height:52px; }
+.podium-card.p1 .podium-step { background:var(--accent); color:var(--gold); height:72px; }
+.podium-card.p2 .podium-step { background:#8892c8; color:var(--white); height:52px; }
 .podium-card.p3 .podium-step { background:#8B4513; color:#fff; height:40px; }
 @media(max-width:500px) { .podium-wrap { grid-template-columns:1fr 1fr 1fr; } .podium-name { font-size:1.2rem !important; } }
 .placement-dots { display:flex; gap:2px; flex-wrap:wrap; }
@@ -303,8 +303,8 @@ td { padding:0.65rem 1rem; font-size:0.875rem; vertical-align:middle; }
 .profile-body { padding:1.5rem 2rem 2rem; }
 .profile-section-title {
   font-family:'Barlow Condensed',sans-serif; font-size:0.8rem; font-weight:600;
-  letter-spacing:0.14em; text-transform:uppercase; color:var(--navy);
-  border-bottom:2px solid var(--navy); padding-bottom:0.35rem; margin-bottom:1rem;
+  letter-spacing:0.14em; text-transform:uppercase; color:var(--accent);
+  border-bottom:2px solid var(--accent); padding-bottom:0.35rem; margin-bottom:1rem;
   display:flex; align-items:center; justify-content:space-between;
 }
 .profile-section { margin-bottom:2rem; }
