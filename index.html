@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tristate TFT ELO</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1e2f6e; --navy-dark: #151f4a; --gold: #f5a623; --gold-pale: #fef3c7;
+  --white: #ffffff; --gray-50: #f8f9fc; --gray-100: #e4e7f0; --gray-200: #c8cedf;
+  --gray-400: #8892a8; --gray-600: #4a5568; --gray-800: #1a202c;
+  --green: #16a34a; --red: #dc2626; --shadow-sm: 0 1px 3px rgba(30,47,110,0.08); --accent: #2633aa;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--white); color:var(--gray-800); font-family:'Inter',sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; }
+.topbar { background:var(--navy); height:4px; }
+header { background:var(--white); border-bottom:1px solid var(--gray-100); padding:0 2rem; }
+.header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:1.5rem 0; }
+.brand { display:flex; align-items:center; gap:1rem; }
+.brand-logo { width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.brand-logo svg { width:30px; height:30px; }
+.brand-name { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:700; color:var(--accent); line-height:1; letter-spacing:0.02em; text-transform:uppercase; }
+.brand-name span { color:var(--gold); }
+.brand-sub { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; letter-spacing:0.18em; color:var(--gray-400); text-transform:uppercase; margin-top:1px; }
+.header-stats { display:flex; gap:2rem; }
+.hstat { text-align:right; }
+.hstat-val { font-family:'Barlow Condensed',sans-serif; font-size:1.5rem; font-weight:700; color:var(--navy); line-height:1; }
+.hstat-label { font-size:0.68rem; color:var(--gray-400); text-transform:uppercase; letter-spacing:0.1em; margin-top:1px; }
+.gold-stripe { height:3px; background:linear-gradient(90deg,var(--navy),var(--accent),var(--navy)); }
+.main { max-width:1200px; margin:0 auto; padding:2rem; }
+.section-head { display:flex; align-items:baseline; gap:1rem; margin-bottom:1rem; }
+.section-title { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--navy); }
+.section-rule { flex:1; height:1px; background:var(--gray-100); }
+.formula-card { background:var(--gray-50); border:1px solid var(--gray-100); border-left:3px solid var(--gold); padding:1rem 1.4rem; margin-bottom:2rem; display:flex; gap:2rem; flex-wrap:wrap; }
+.formula-item { font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--gray-600); line-height:1.7; }
+.formula-item strong { color:var(--navy); font-weight:600; }
+.tourn-tabs { display:flex; gap:0.5rem; margin-bottom:2rem; flex-wrap:wrap; }
+.tourn-tab { font-family:'Barlow Condensed',sans-serif; font-size:0.85rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:0.55rem 1.2rem; border:1.5px solid var(--gray-200); background:var(--white); color:var(--gray-400); cursor:pointer; transition:all 0.15s; border-radius:2px; }
+.tourn-tab:hover { border-color:var(--navy); color:var(--navy); }
+.tourn-tab.active { background:var(--navy); border-color:var(--navy); color:var(--white); }
+.tourn-tab.gold-active { background:var(--gold); border-color:var(--gold); color:var(--navy); }
+.view-tabs { display:flex; gap:0; border-bottom:2px solid var(--gray-100); margin-bottom:0; }
+.view-tab { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; padding:0.7rem 1.2rem; cursor:pointer; color:var(--gray-400); border:none; background:transparent; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+.view-tab:hover { color:var(--navy); }
+.view-tab.active { color:var(--navy); border-bottom-color:var(--accent); font-weight:600; }
+.view-content { display:none; }
+.view-content.active { display:block; }
+.table-wrap { background:var(--white); border:1px solid var(--gray-100); border-top:none; overflow:hidden; box-shadow:var(--shadow-sm); }
+table { width:100%; border-collapse:collapse; }
+thead th { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gray-400); padding:0.7rem 1rem; text-align:left; background:var(--gray-50); border-bottom:1px solid var(--gray-100); cursor:pointer; user-select:none; white-space:nowrap; transition:color 0.15s; }
+thead th:hover, thead th.sorted { color:var(--navy); }
+thead th.sorted::after { content:' ↓'; color:var(--accent); }
+tbody tr { border-bottom:1px solid var(--gray-50); transition:background 0.1s; animation:rowIn 0.3s ease forwards; opacity:0; }
+@keyframes rowIn { to { opacity:1; } }
+tbody tr:hover { background:var(--gray-50); }
+tbody tr:last-child { border-bottom:none; }
+td { padding:0.65rem 1rem; font-size:0.875rem; vertical-align:middle; }
+.rank-col { width:48px; text-align:center; }
+.rank-num { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; color:var(--gray-400); }
+.rank-1 .rank-num { color:var(--gold); }
+.rank-2 .rank-num { color:var(--gray-400); }
+.rank-3 .rank-num { color:#c27c2f; }
+.rank-1 td:first-child { border-left:3px solid var(--gold); }
+.rank-2 td:first-child { border-left:3px solid var(--gray-200); }
+.rank-3 td:first-child { border-left:3px solid #c27c2f; }
+.player-name { font-weight:600; color:var(--navy); font-size:0.875rem; }
+.player-tag { font-weight:400; color:var(--gray-400); font-size:0.8rem; }
+.player-aliases { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; color:var(--gray-400); margin-top:1px; }
+.rating-val { font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:700; color:var(--navy); }
+.change-val { font-family:'IBM Plex Mono',monospace; font-size:0.78rem; font-weight:600; padding:0.15rem 0.45rem; border-radius:3px; display:inline-block; }
+.change-pos { color:var(--green); background:#f0fdf4; }
+.change-neg { color:var(--red); background:#fef2f2; }
+.change-zero { color:var(--gray-400); }
+.games-val { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--gray-400); }
+/* last-5 placement dots */
+.last5 { display:flex; gap:2px; }
+.l5dot { width:19px; height:19px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:0.58rem; font-weight:600; }
+.l5d1{background:#fef3c7;color:#92400e;border:1px solid #fbbf24}
+.l5d2{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.l5d3{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.l5d4{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+.l5d5{background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0}
+.l5d6{background:#fff1f2;color:#be123c;border:1px solid #fda4af}
+.l5d7{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5}
+.l5d8{background:#fef2f2;color:#991b1b;border:1px solid #f87171}
+/* sparkline */
+.spark-cell { width:80px; }
+.spark-svg { display:block; }
+.prov-badge { display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:0.55rem; letter-spacing:0.05em; padding:0.1rem 0.35rem; border-radius:2px; text-transform:uppercase; margin-left:0.4rem; vertical-align:middle; }
+.badge-p { background:#ede9fe; color:#6d28d9; border:1px solid #c4b5fd; }
+
+/* ── PODIUM ── */
+.podium-wrap { display:grid; grid-template-columns:1fr 1.12fr 1fr; gap:0; margin:1.5rem 0 2rem; align-items:end; }
+.podium-card { display:flex; flex-direction:column; align-items:center; padding:1.5rem 1rem 0; position:relative; cursor:pointer; }
+.podium-card.p1 { order:2; }
+.podium-card.p2 { order:1; }
+.podium-card.p3 { order:3; }
+.podium-medal { font-size:1.8rem; margin-bottom:0.5rem; }
+.podium-name { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:700; color:var(--navy); text-align:center; line-height:1.1; letter-spacing:0.01em; margin-bottom:0.1rem; }
+.podium-tag { font-family:'IBM Plex Mono',monospace; font-weight:400; color:var(--gray-400); font-size:0.7rem; display:block; text-align:center; margin-bottom:0.5rem; }
+.podium-rating { font-family:'IBM Plex Mono',monospace; font-size:0.72rem; font-weight:400; color:var(--gray-400); margin-bottom:0.75rem; letter-spacing:0.05em; }
+.podium-step { width:100%; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:0.05em; }
+.podium-card.p1 .podium-name { color:var(--navy); font-size:2.6rem; font-weight:700; }
+.podium-card.p1 .podium-step { background:var(--navy); color:var(--gold); height:72px; }
+.podium-card.p2 .podium-step { background:var(--gray-200); color:var(--white); height:52px; }
+.podium-card.p3 .podium-step { background:#8B4513; color:#fff; height:40px; }
+@media(max-width:500px) { .podium-wrap { grid-template-columns:1fr 1fr 1fr; } .podium-name { font-size:1.2rem !important; } }
+.placement-dots { display:flex; gap:2px; flex-wrap:wrap; }
+.pdot { width:19px; height:19px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:0.58rem; font-weight:600; }
+.pd1{background:#fef3c7;color:#92400e;border:1px solid #fbbf24}
+.pd2{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.pd3{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.pd4{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+.pd5{background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0}
+.pd6{background:#fff1f2;color:#be123c;border:1px solid #fda4af}
+.pd7{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5}
+.pd8{background:#fef2f2;color:#991b1b;border:1px solid #f87171}
+.game-log-section { background:var(--white); border:1px solid var(--gray-100); border-top:none; padding:1.5rem; }
+.game-block { margin-bottom:2rem; }
+.game-label { font-family:'Barlow Condensed',sans-serif; font-size:0.85rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--navy); margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid var(--gray-100); display:flex; align-items:center; gap:0.75rem; }
+.game-label-pill { background:var(--navy); color:var(--white); font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:2px; letter-spacing:0.08em; font-family:'IBM Plex Mono',monospace; }
+.game-meta { font-size:0.7rem; color:var(--gray-400); font-weight:400; font-family:'IBM Plex Mono',monospace; }
+.lobby-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:0.75rem; }
+.lobby-card { border:1px solid var(--gray-100); background:var(--white); overflow:hidden; box-shadow:var(--shadow-sm); }
+.lobby-card-head { background:var(--navy); color:var(--white); font-family:'IBM Plex Mono',monospace; font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; padding:0.45rem 0.75rem; }
+.lobby-row { display:flex; align-items:center; padding:0.3rem 0.75rem; border-bottom:1px solid var(--gray-50); font-size:0.8rem; gap:0.5rem; }
+.lobby-row:last-child { border-bottom:none; }
+.lr-place { font-family:'Barlow Condensed',sans-serif; font-size:0.9rem; font-weight:700; width:18px; color:var(--gray-400); flex-shrink:0; }
+.lr-place.p1{color:var(--gold)} .lr-place.p2{color:var(--gray-400)} .lr-place.p3{color:#c27c2f}
+.lr-name { flex:1; color:var(--gray-800); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lr-pts { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; font-weight:600; white-space:nowrap; }
+.lr-mult { font-size:0.62rem; color:var(--gray-400); font-family:'IBM Plex Mono',monospace; }
+@media(max-width:700px) { .header-stats{display:none} .main{padding:1rem} td{padding:0.5rem 0.6rem} }
+
+/* ── MAIN GRID LAYOUT ─────────────────────────────────────────────────────── */
+.main-grid {
+  display:grid;
+  grid-template-columns:3fr 1fr;
+  gap:1.5rem;
+  align-items:start;
+}
+.main-left { min-width:0; }
+.main-right { min-width:0; }
+@media(max-width:900px) {
+  .main-grid { grid-template-columns:1fr; }
+  .main-right { order:99; }
+}
+
+/* ── TOURNAMENT DROPDOWN ──────────────────────────────────────────────────── */
+.tourn-select-wrap { margin-bottom:0.75rem; }
+.select-wrapper {
+  position:relative; display:inline-block; width:100%;
+}
+.select-wrapper select {
+  width:100%;
+  appearance:none; -webkit-appearance:none;
+  background:var(--white);
+  border:1.5px solid var(--gray-200);
+  padding:0.6rem 2.5rem 0.6rem 1rem;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:0.95rem; font-weight:700;
+  letter-spacing:0.04em; text-transform:uppercase;
+  color:var(--navy); cursor:pointer; outline:none;
+  transition:border-color 0.15s;
+}
+.select-wrapper select:focus,
+.select-wrapper select:hover { border-color:var(--navy); }
+.select-chevron {
+  position:absolute; right:0.9rem; top:50%;
+  transform:translateY(-50%);
+  pointer-events:none; color:var(--navy);
+  font-size:0.8rem;
+}
+
+/* ── STAT LEADER PANELS ───────────────────────────────────────────────────── */
+.stat-leader-panel {
+  background:var(--white);
+  border:1px solid var(--gray-100);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.stat-leader-head {
+  background:var(--gray-50);
+  border-bottom:1px solid var(--gray-100);
+  padding:0.6rem 1rem;
+  display:flex; align-items:baseline; justify-content:space-between;
+}
+.stat-leader-title {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.62rem; font-weight:400;
+  letter-spacing:0.15em; text-transform:uppercase;
+  color:var(--gray-400);
+}
+.stat-leader-sub {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.55rem; color:var(--gray-300);
+  letter-spacing:0.06em;
+}
+.stat-leader-row {
+  display:flex; align-items:center;
+  padding:0.45rem 1rem;
+  border-bottom:1px solid var(--gray-50);
+  gap:0.5rem; cursor:pointer;
+  transition:background 0.1s;
+}
+.stat-leader-row:last-child { border-bottom:none; }
+.stat-leader-row:hover { background:var(--gray-50); }
+.sl-rank {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:0.85rem; font-weight:700;
+  color:var(--gray-300); width:18px; flex-shrink:0; text-align:center;
+}
+.sl-rank.r1 { color:var(--gold); }
+.sl-rank.r2 { color:var(--gray-400); }
+.sl-rank.r3 { color:#c27c2f; }
+.sl-name {
+  flex:1; min-width:0;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.72rem; color:var(--gray-800);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sl-val {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.05rem; font-weight:700;
+  color:var(--navy); flex-shrink:0;
+}
+.sl-val.best { color:var(--green); }
+
+/* ── PROFILE MODAL ────────────────────────────────────────────────────────── */
+.profile-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(10,18,50,0.72); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center; padding:1rem;
+}
+.profile-overlay.open { display:flex; }
+.profile-modal {
+  background:var(--white); width:100%; max-width:860px; max-height:90vh;
+  overflow-y:auto; position:relative; box-shadow:0 24px 80px rgba(10,18,50,0.35);
+  animation:profileIn 0.22s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes profileIn { from{opacity:0;transform:translateY(18px) scale(0.97)} to{opacity:1;transform:none} }
+.profile-close {
+  position:sticky; top:0.75rem; float:right; margin:0.75rem 0.75rem -2rem 0;
+  background:var(--gray-100); border:none; width:30px; height:30px; border-radius:50%;
+  cursor:pointer; font-size:1rem; line-height:1; display:flex; align-items:center; justify-content:center;
+  color:var(--gray-600); z-index:10; flex-shrink:0;
+}
+.profile-close:hover { background:var(--gray-200); }
+
+/* Profile header — white, left-bordered in gold */
+.profile-header {
+  background:var(--white);
+  border-bottom:1px solid var(--gray-100);
+  border-top:4px solid var(--accent);
+  padding:1.75rem 2rem 1.5rem;
+  display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:center;
+}
+.profile-name {
+  font-family:'Barlow Condensed',sans-serif; font-size:2.2rem; font-weight:700;
+  color:var(--navy); letter-spacing:0.02em; line-height:1; margin-bottom:0.2rem;
+}
+.profile-tag { color:var(--gold); font-size:1.2rem; font-weight:400; }
+.profile-aka {
+  font-family:'IBM Plex Mono',monospace; font-size:0.63rem;
+  color:var(--gray-400); margin-top:0.35rem; letter-spacing:0.06em;
+}
+.profile-rank-badge {
+  text-align:right;
+}
+.profile-rank-label {
+  font-family:'IBM Plex Mono',monospace; font-size:0.55rem;
+  letter-spacing:0.15em; text-transform:uppercase; color:var(--gray-400);
+  margin-bottom:0.2rem;
+}
+.profile-rank-num {
+  font-family:'Barlow Condensed',sans-serif; font-size:2.5rem;
+  font-weight:700; color:var(--navy); line-height:1;
+}
+
+/* Stat pills */
+.profile-stats-row {
+  display:grid; grid-template-columns:repeat(5,1fr);
+  border-bottom:1px solid var(--gray-100);
+  background:var(--gray-50);
+}
+.profile-stat {
+  padding:1.1rem 1rem; text-align:center; border-right:1px solid var(--gray-100);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+}
+.profile-stat-badge { height:1.4rem; display:flex; align-items:center; justify-content:center; margin-bottom:0.3rem; }
+.profile-stat:last-child { border-right:none; }
+.profile-stat-val {
+  font-family:'Barlow Condensed',sans-serif; font-size:1.7rem; font-weight:600;
+  color:var(--navy); line-height:1; margin-bottom:0.2rem;
+}
+.profile-stat-lbl {
+  font-family:'IBM Plex Mono',monospace; font-size:0.56rem;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-400);
+}
+
+/* Profile body */
+.profile-body { padding:1.5rem 2rem 2rem; }
+.profile-section-title {
+  font-family:'Barlow Condensed',sans-serif; font-size:0.8rem; font-weight:600;
+  letter-spacing:0.14em; text-transform:uppercase; color:var(--navy);
+  border-bottom:2px solid var(--navy); padding-bottom:0.35rem; margin-bottom:1rem;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.profile-section { margin-bottom:2rem; }
+
+/* ELO chart */
+.elo-chart-wrap { position:relative; height:120px; }
+
+/* Tournament results table */
+.tourn-results-table { width:100%; border-collapse:collapse; }
+.tourn-results-table th {
+  font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--gray-400); padding:0.4rem 0.6rem;
+  text-align:left; border-bottom:1px solid var(--gray-100); font-weight:400;
+}
+.tourn-results-table td { padding:0.5rem 0.6rem; border-bottom:1px solid var(--gray-50); font-size:0.82rem; vertical-align:middle; }
+.tourn-results-table tr:last-child td { border-bottom:none; }
+.tourn-results-table tr:hover td { background:var(--gray-50); }
+.tr-name { font-weight:600; color:var(--navy); font-family:'Barlow Condensed',sans-serif; font-size:0.95rem; }
+.tr-delta-pos { color:var(--green); font-family:'IBM Plex Mono',monospace; font-size:0.75rem; font-weight:400; }
+.tr-delta-neg { color:var(--red); font-family:'IBM Plex Mono',monospace; font-size:0.75rem; font-weight:400; }
+.tr-placement-dots { display:flex; gap:2px; flex-wrap:wrap; }
+
+/* Placement distribution */
+.place-dist { display:grid; grid-template-columns:repeat(8,1fr); gap:3px; margin-top:0.5rem; }
+.place-bar-wrap { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.place-bar-outer { width:100%; height:60px; display:flex; align-items:flex-end; }
+.place-bar-inner { width:100%; border-radius:2px 2px 0 0; min-height:2px; }
+.place-bar-label { font-family:'IBM Plex Mono',monospace; font-size:0.55rem; color:var(--gray-400); }
+.place-bar-count { font-family:'Barlow Condensed',sans-serif; font-size:0.8rem; font-weight:700; color:var(--navy); min-height:1.1rem; }
+.pb1{background:#fbbf24} .pb2{background:#94a3b8} .pb3{background:#c2410c}
+.pb4{background:#86efac} .pb5{background:#e2e8f0} .pb6{background:#fda4af}
+.pb7{background:#fca5a5} .pb8{background:#f87171}
+
+/* Leaderboard rows clickable */
+tbody tr { cursor:pointer; }
+tbody tr:hover td:nth-child(2) .player-name { color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1191.5 1209.1" style="width:52px;height:52px;border-radius:50%;display:block">
+          <defs><style>.st0{fill:none}.st1{clip-path:url(#clippath-1)}.st2{fill:#2633aa}.st3{fill:#fff}.st4{fill:#ffbd48}.st5{fill:#ffb236}.st6{clip-path:url(#clippath)}.st7{fill:#091870}</style><clipPath id="clippath"><circle class="st0" cx="595.7" cy="604.6" r="559.8"/></clipPath><clipPath id="clippath-1"><circle class="st0" cx="595.7" cy="604.6" r="316.9"/></clipPath></defs>
+          <path class="st5" d="M595.7,44.8c309.2,0,559.8,250.6,559.8,559.8s-250.6,559.8-559.8,559.8S36,913.7,36,604.6,286.6,44.8,595.7,44.8M595.7,27c-78,0-153.6,15.3-224.8,45.4-34.2,14.5-67.2,32.4-98.1,53.2-30.6,20.7-59.3,44.4-85.5,70.5-26.1,26.1-49.9,54.9-70.5,85.5-20.9,30.9-38.8,63.9-53.2,98.1-30.1,71.2-45.4,146.8-45.4,224.8s15.3,153.6,45.4,224.8c14.5,34.2,32.4,67.2,53.2,98.1,20.7,30.6,44.4,59.3,70.5,85.5,26.1,26.1,54.9,49.9,85.5,70.5,30.9,20.9,63.9,38.8,98.1,53.2,71.2,30.1,146.8,45.4,224.8,45.4s153.6-15.3,224.8-45.4c34.2-14.5,67.2-32.4,98.1-53.2,30.6-20.7,59.3-44.4,85.5-70.5,26.1-26.1,49.9-54.9,70.5-85.5,20.9-30.9,38.8-63.9,53.2-98.1,30.1-71.2,45.4-146.8,45.4-224.8s-15.3-153.6-45.4-224.8c-14.5-34.2-32.4-67.2-53.2-98.1-20.7-30.6-44.4-59.3-70.5-85.5-26.1-26.1-54.9-49.9-85.5-70.5-30.9-20.9-63.9-38.8-98.1-53.2-71.2-30.1-146.8-45.4-224.8-45.4h0Z"/>
+          <g class="st6"><rect class="st2" x="-1014.6" y="-353.4" width="3220.6" height="1856.1"/></g>
+          <g><path class="st3" d="M287.4,237.6l-21.3,22.3,55.6,53-18.3,19.2-55.6-53-21.3,22.3-17.1-16.3,60.9-63.8,17.1,16.3Z"/><path class="st3" d="M403.7,251.1l-34.4-19.4-13.9,8.7,18.5,29.4-22.5,14.2-53.5-85,58.8-37,23.4,5.3,16.9,26.9-4.8,21.2,36.5,20-25.1,15.8ZM342.9,220.5l25.3-16,1.1-4.7-6.4-10.1-4.6-.9-25.3,16,9.9,15.7Z"/><path class="st3" d="M453.4,146.4l17.6,50.2,16.7-5.9,7.8,22.3-58.5,20.5-7.8-22.3,16.7-5.9-17.6-50.2-16.7,5.9-7.8-22.3,58.5-20.5,7.8,22.3-16.7,5.9Z"/><path class="st3" d="M588.4,154l3.3,27.9-14.9,18.9-57.9,6.9-17.2-13.6,15.9-20.2,11.8,9.3,31.4-3.7,3.4-4.3-1-8.2-2.6-2.1-43.7,2.6-17.2-13.6-3.3-27.7,14.9-18.9,54.7-6.5,16.6,13.1-15.9,20.2-11.1-8.8-28.1,3.3-3.4,4.3,1,8.1,2.6,2.1,43.7-2.6,17.2,13.6Z"/><path class="st3" d="M696.4,133.2l-30.6-3.7-9.2,76.3-26.4-3.2,9.2-76.3-30.6-3.7,2.8-23.5,87.6,10.6-2.8,23.5Z"/><path class="st3" d="M749.5,213.1l-34.2-12.2-11.5,14.7-25.3-9,69.6-81.8,25.4,9.1,2.2,107.4-26.5-9.5.4-18.7ZM749.9,190l.7-34.1-21,26.9,20.3,7.2Z"/><path class="st3" d="M882.8,220.1l-26.1-16.5-41,64.9-22.5-14.2,41-64.9-26.1-16.5,12.6-20,74.6,47.1-12.6,20Z"/><path class="st3" d="M923.7,258.2l-11.1,10.7,34,35.3-16.2,15.6-34-35.3-11.1,10.7,39.1,40.6-17,16.4-57.5-59.7,72.3-69.7,57.5,59.7-17,16.4-39.1-40.6Z"/></g>
+          <g><path class="st3" d="M362.5,965.6l-24-19.3-48.1,59.9-20.7-16.6,48.1-59.9-24-19.3,14.8-18.4,68.8,55.3-14.8,18.4Z"/><path class="st3" d="M397.7,1049.5l-32.6-16-13.1,13.3-24.1-11.8,78.3-73.5,24.3,11.9-10,107-25.3-12.4,2.5-18.5ZM400.7,1026.6l4.5-33.8-23.9,24.3,19.3,9.5Z"/><path class="st3" d="M541.8,1091.4l-19.7,13-48.8-10-15.5-23.5,12.2-59.3,23.5-15.5,47.8,9.8,13,19.7-21.4,14.1-8.7-13.3-22.8-4.7-7.3,4.8-8.2,39.9,4.8,7.3,23.8,4.9,13.2-8.7,14.1,21.5Z"/><path class="st3" d="M654.9,1030.3l-30.8,1.1,2.7,76.8-26.5.9-2.7-76.8-30.8,1.1-.8-23.6,88.2-3.1.8,23.6Z"/><path class="st3" d="M714.3,1015.7l13.1,51.5,17.2-4.4,5.8,22.9-60.1,15.3-5.8-22.9,17.2-4.4-13.1-51.5-17.2,4.4-5.8-22.9,60.1-15.3,5.8,22.9-17.2,4.4Z"/><path class="st3" d="M855.1,1020.1l-7.4,22.4-44.6,22.4-26.7-8.9-27.2-54.1,8.9-26.8,43.6-21.9,22.4,7.4-8.1,24.4-15.1-5-20.8,10.5-2.8,8.3,18.3,36.4,8.3,2.8,21.8-10.9,5-15.1,24.4,8.1Z"/><path class="st3" d="M928.8,923.9l18.3,21.3-1.8,23.9-44.2,38-21.9-1.7,1.9-25.6,15,1.1,24-20.6.4-5.4-5.4-6.3-3.3-.3-34.8,26.5-21.9-1.7-18.2-21.2,1.8-23.9,41.8-35.9,21,1.6-1.9,25.6-14.2-1.1-21.5,18.5-.4,5.4,5.3,6.2,3.3.3,34.8-26.5,21.9,1.7Z"/></g>
+          <path class="st5" d="M595.7,287.7c175,0,316.9,141.9,316.9,316.9s-141.9,316.9-316.9,316.9-316.9-141.9-316.9-316.9,141.9-316.9,316.9-316.9M595.7,269.9c-45.2,0-89,8.8-130.3,26.3-39.8,16.9-75.6,41-106.4,71.7-30.7,30.7-54.9,66.5-71.7,106.4-17.5,41.3-26.3,85.1-26.3,130.3s8.8,89,26.3,130.3c16.9,39.8,41,75.6,71.7,106.4,30.7,30.7,66.5,54.9,106.4,71.7,41.3,17.5,85.1,26.3,130.3,26.3s89-8.8,130.3-26.3c39.8-16.9,75.6-41,106.4-71.7,30.7-30.7,54.9-66.5,71.7-106.4,17.5-41.3,26.3-85.1,26.3-130.3s-8.8-89-26.3-130.3c-16.9-39.8-41-75.6-71.7-106.4-30.7-30.7-66.5-54.9-106.4-71.7-41.3-17.5-85.1-26.3-130.3-26.3h0Z"/>
+          <g class="st1"><g><path class="st4" d="M688.4,808.8l-17.1-28.1-13.6-22.3h0c0,0-4.8-7.7-4.8-7.7l-9.2,5.6-.2-.4-18.2-29.9-16.4,27.1,10.8,17.7-9.2,5.6,6.5,10.8,18.7,30.7,9.4,15.5,21.3,35,48.6,79.8h59.4l-85.9-139.5ZM608.2,697.9l-47.2-77.5s26.2-36.3,14.6-71.3c-11.5-35-46.7-114.2-46.7-114.2-15.1-28.6-54.2-36.5-85.4-17.6l-38.3,23.2c-31.4,19-42.2,57.2-23.8,83.8,0,0,61.5,67.3,83.8,91.7,22.4,24.5,71.7,19,71.7,19l55.5,91,16.4-27-.7-1.1ZM486.5,596c-1.3.8-2.8,1.5-4.4,1.8-3.7.7-7.8-.7-10.1-4.1l-74.4-104.2c-3.4-4.6-2.2-11.1,2.4-14.4,4.7-3.4,11.3-2.2,14.5,2.3l74.4,104.1c3.4,4.7,2.2,11.2-2.4,14.5ZM515.5,578.6c-1.3.7-2.7,1.3-4,1.5-3.9.7-7.7-.7-9.7-3.9l-67.6-111.2c-2.6-4.4-.8-10.4,4.1-13.3,4.9-3,11-1.9,13.7,2.4l67.6,111.2c2.6,4.3.7,10.3-4.1,13.3ZM543.7,561.3c-5,2.5-11.3.6-13.9-4.5l-58.3-114c-2.5-4.9-.5-11.2,4.6-13.9,5.2-2.6,11.4-.6,14.1,4.5l58.2,113.9c.7,1.2,1,2.5,1.1,3.8.3,4-1.9,8.1-5.8,10.2Z"/><path class="st4" d="M786.4,440.4l-38.4-23.2c-31.3-19-70.2-11-85.4,17.6,0,0-35.2,79.2-46.7,114.2-11.6,35,14.7,71.3,14.7,71.3l-47.2,77.5-35.3,58-.2.4-9.2-5.6-4.7,7.7h0c0,0-13.6,22.4-13.6,22.4l-17.2,28.1-85.9,139.5h59.4l48.6-79.8,21.4-35,9.3-15.5,18.8-30.7,6.5-10.8-9.2-5.6,22.2-36.5,60.4-99.4s49.3,5.4,71.7-19c22.3-24.4,83.8-91.7,83.8-91.7,18.4-26.5,7.6-64.8-23.7-83.8ZM661.8,556.9c-2.6,5-9,7-14,4.5-3.8-2.1-6.1-6.2-5.8-10.2,0-1.3.5-2.6,1.2-3.8l58.2-113.9c2.6-5,8.9-7.1,14.1-4.5,4.9,2.7,7.1,9,4.5,13.9l-58.2,114ZM680.1,580.1c-1.4-.2-2.7-.7-4.1-1.5-4.9-3-6.7-9-4.1-13.3l67.6-111.2c2.7-4.3,8.9-5.4,13.7-2.4,4.9,2.9,6.8,8.9,4.1,13.3l-67.6,111.2c-2,3.2-5.8,4.7-9.6,3.9ZM793.8,489.5l-74.3,104.2c-2.3,3.4-6.3,4.8-10.2,4.1-1.5-.3-3.1-.9-4.3-1.8-4.7-3.3-5.8-9.8-2.4-14.5l74.3-104.1c3.3-4.6,9.8-5.7,14.5-2.3,4.7,3.3,5.8,9.8,2.4,14.4Z"/></g></g>
+          <path class="st7" d="M1030.5,404.3l7.4,31.9c.3,1.1,1.2,2,2.4,2.1l32.6,2.9c2.6.2,3.4,3.6,1.1,5l-28.1,16.9c-1,.6-1.5,1.8-1.2,2.9l7.4,31.9c.6,2.5-2.4,4.3-4.4,2.6l-24.7-21.5c-.9-.8-2.1-.9-3.1-.3l-28.1,16.9c-2.2,1.3-4.9-1-3.8-3.3l12.8-30.2c.5-1.1.2-2.3-.7-3.1l-24.7-21.5c-2-1.7-.6-4.9,2-4.7l32.6,2.9c1.2.1,2.2-.6,2.7-1.6l12.8-30.2c1-2.4,4.5-2.1,5.1.4Z"/><path class="st7" d="M1030.5,410.2l7.4,31.9c.3,1.1,1.2,2,2.4,2.1l32.6,2.9c2.6.2,3.4,3.6,1.1,5l-28.1,16.9c-1,.6-1.5,1.8-1.2,2.9l7.4,31.9c.6,2.5-2.4,4.3-4.4,2.6l-24.7-21.5c-.9-.8-2.1-.9-3.1-.3l-28.1,16.9c-2.2,1.3-4.9-1-3.8-3.3l12.8-30.2c.5-1.1.2-2.3-.7-3.1l-24.7-21.5c-2-1.7-.6-4.9,2-4.7l32.6,2.9c1.2.1,2.2-.6,2.7-1.6l12.8-30.2c1-2.4,4.5-2.1,5.1.4Z"/><path class="st7" d="M166.5,405.2l17.1,28c.6,1,1.8,1.5,2.9,1.2l31.9-7.6c2.5-.6,4.3,2.4,2.7,4.4l-21.3,24.9c-.8.9-.9,2.1-.3,3.1l17.1,28c1.4,2.2-.9,4.9-3.3,3.9l-30.2-12.6c-1.1-.4-2.3-.2-3.1.7l-21.3,24.9c-1.7,2-4.9.6-4.7-2l2.6-32.7c0-1.2-.6-2.2-1.6-2.7l-30.2-12.6c-2.4-1-2.1-4.5.4-5.1l31.9-7.6c1.1-.3,2-1.2,2.1-2.4l2.6-32.7c.2-2.6,3.6-3.4,5-1.2Z"/><path class="st7" d="M179,720.9l7.4,31.9c.3,1.1,1.2,2,2.4,2.1l32.6,2.9c2.6.2,3.4,3.6,1.1,5l-28.1,16.9c-1,.6-1.5,1.8-1.2,2.9l7.4,31.9c.6,2.5-2.4,4.3-4.4,2.6l-24.7-21.5c-.9-.8-2.1-.9-3.1-.3l-28.1,16.9c-2.2,1.3-4.9-1-3.8-3.3l12.8-30.2c.5-1.1.2-2.3-.7-3.1l-24.7-21.5c-2-1.7-.6-4.9,2-4.7l32.6,2.9c1.2.1,2.2-.6,2.7-1.6l12.8-30.2c1-2.4,4.5-2.1,5.1.4Z"/><path class="st7" d="M1020.2,715.9l17.1,28c.6,1,1.8,1.5,2.9,1.2l31.9-7.6c2.5-.6,4.3,2.4,2.7,4.4l-21.3,24.9c-.8.9-.9,2.1-.3,3.1l17.1,28c1.4,2.2-.9,4.9-3.3,3.9l-30.2-12.6c-1.1-.4-2.3-.2-3.1.7l-21.3,24.9c-1.7,2-4.9.6-4.7-2l2.6-32.7c0-1.2-.6-2.2-1.6-2.7l-30.2-12.6c-2.4-1-2.1-4.5.4-5.1l31.9-7.6c1.1-.3,2-1.2,2.1-2.4l2.6-32.7c.2-2.6,3.6-3.4,5-1.2Z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Tristate <span>TFT</span></div>
+        <div class="brand-sub">ELO Rating System</div>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="gold-stripe"></div>
+
+<div class="main">
+
+  <!-- Podium -->
+  <div style="margin-top:1.5rem">
+    <div class="section-head"><span class="section-title">Top Rated</span><div class="section-rule"></div></div>
+  </div>
+  <div class="podium-wrap" id="podiumWrap"></div>
+
+  <!-- Main content: 3/4 leaderboard + 1/4 stat leaders -->
+  <div class="main-grid">
+
+    <!-- Left: leaderboard -->
+    <div class="main-left">
+
+      <!-- Tournament dropdown -->
+      <div class="tourn-select-wrap">
+        <div class="section-head" style="margin-bottom:0.75rem"><span class="section-title">View</span><div class="section-rule"></div></div>
+        <div class="select-wrapper">
+          <select id="tournSelect" onchange="selectViewFromDropdown(this)">
+            <option value="global">◆ All Tournaments</option>
+            <option value="gsc1">Garden State Classic #1</option>
+            <option value="emp1">Empire Open #1</option>
+            <option value="key1">Keystone Cup #1</option>
+            <option value="gsc2">Garden State Classic #2</option>
+            <option value="tc5">Tristate Championship 5</option>
+            <option value="emp2">Empire Open #2</option>
+            <option value="key2">Keystone Cup #2</option>
+            <option value="gsc3">Garden State Classic #3</option>
+          </select>
+          <span class="select-chevron">▾</span>
+        </div>
+      </div>
+
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="selectTab('board',this)">Leaderboard</button>
+        <button class="view-tab" onclick="selectTab('log',this)">Game Log</button>
+      </div>
+
+      <div id="board" class="view-content active">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th class="rank-col sorted" onclick="sortBy('rating')">#</th>
+              <th onclick="sortBy('name')">Player</th>
+              <th onclick="sortBy('rating')">Rating</th>
+              <th onclick="sortBy('games')">Games</th>
+              <th>Last 5</th>
+              <th>Trend</th>
+            </tr></thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="log" class="view-content">
+        <div class="game-log-section" id="gameLogContent"></div>
+      </div>
+
+    </div><!-- /main-left -->
+
+    <!-- Right: stat leader panels -->
+    <div class="main-right">
+
+      <div class="section-head" style="margin-bottom:0.75rem"><span class="section-title">Stat Leaders</span><div class="section-rule"></div></div>
+
+      <div class="stat-leader-panel">
+        <div class="stat-leader-head">
+          <span class="stat-leader-title">Avg Placement</span>
+          <span class="stat-leader-sub">min. 15 games</span>
+        </div>
+        <div id="avpLeaders"></div>
+      </div>
+
+      <div class="stat-leader-panel" style="margin-top:1rem">
+        <div class="stat-leader-head">
+          <span class="stat-leader-title">Top 4 %</span>
+          <span class="stat-leader-sub">min. 15 games</span>
+        </div>
+        <div id="top4Leaders"></div>
+      </div>
+
+      <div class="section-head" style="margin:1.5rem 0 0.75rem"><span class="section-title">Hot &amp; Cold</span><div class="section-rule"></div></div>
+
+      <div class="stat-leader-panel">
+        <div class="stat-leader-head">
+          <span class="stat-leader-title" style="color:#16a34a">🔥 Hottest</span>
+          <span class="stat-leader-sub">last 10 games</span>
+        </div>
+        <div id="hotLeaders"></div>
+      </div>
+
+      <div class="stat-leader-panel" style="margin-top:1rem">
+        <div class="stat-leader-head">
+          <span class="stat-leader-title" style="color:#dc2626">❄ Coldest</span>
+          <span class="stat-leader-sub">last 10 games</span>
+        </div>
+        <div id="coldLeaders"></div>
+      </div>
+
+    </div><!-- /main-right -->
+
+  </div><!-- /main-grid -->
+
+  <!-- Formula -->
+  <div style="margin-top:2.5rem">
+    <div class="section-head"><span class="section-title">Rating Formula</span><div class="section-rule"></div></div>
+  </div>
+  <div class="formula-card" style="margin-bottom:2rem">
+    <div class="formula-item"><strong>Base Points</strong><br>1st:+40 · 2nd:+30 · 3rd:+20 · 4th:+10<br>5th:−10 · 6th:−20 · 7th:−30 · 8th:−40</div>
+    <div class="formula-item"><strong>Lobby Multiplier</strong><br>Diff = Player EffRating − Avg of lobby opponents<br>Mult = clamp(1 − Diff/700, 0.65×, 2.0×)</div>
+    <div class="formula-item"><strong>Confidence</strong><br>conf = min(games / 10, 1.0)<br>EffRating = conf × Rating + (1−conf) × 1000</div>
+    <div class="formula-item"><strong>Starting Rating</strong><br>1000 for all players<br>10+ games = Established</div>
+  </div>
+
+</div>
+
+<!-- ── PLAYER PROFILE MODAL ───────────────────────────────────────────────── -->
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-modal" id="profileModal">
+    <button class="profile-close" id="profileClose" aria-label="Close">✕</button>
+    <div id="profileContent"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// ALIAS MAP
+// ══════════════════════════════════════════════════════
+const ALIAS_MAP = {
+  // ── Previously established ──────────────────────────────────────
+  "BunniKillYa#sleep":          "BunniKillYa#NA1",
+  "Cool Guy Dom#dom":           "Cool Guy Dom",
+  "DimDanSum#DAN":              "DimDansum#DAN",
+  "DimDanSum#Dan":              "DimDansum#DAN",
+  "kchevray#2086":              "Kchevray#2086",
+  "RamKev#NA1":                 "RamKev #NA1",
+  "Schısm#NA1":                 "Schism#Ski",
+  "Tomathyx#ttv":               "Tomathyx",
+  "Tomathy#tft":                "Tomathyx",
+  "PMD JOE BOOKMARK #PMD":      "Joe Bookmark",
+  "joe#book":                   "Joe Bookmark",
+  "appies#spicy":               "Appies",
+  "Appies#spicy":               "Appies",
+  "Appies#Spicy":               "Appies",
+  "anime girl#kpop":            "anime girl",
+  "AmznglyRandy#NA1":           "AmznglyRandy",
+  "Lab 025 Bass#LAB":           "Bass#LAB",
+  "LAB 025 Bass#LAB":           "Bass#LAB",
+  "LAB 025 Bass #LAB":          "Bass#LAB",
+  "ralphie#doa":                "ARA Ralphie#0016",
+  "ARA ralphie#0016":           "ARA Ralphie#0016",
+  "ara ralphie#0016":           "ARA Ralphie#0016",
+  "ARA Ralphie#0016":           "ARA Ralphie#0016",
+  "harmony #minji":             "harmony#cinna",
+  "franchise#thee":             "Franchise#thee",
+  "Grank 15#NA1":               "Grank 15 #NA1",
+  "Grank 15 #NA1":              "Grank 15 #NA1",
+  "Rycheco#NA1":                "Rycheco#NA1",
+  "rycheco#na1":                "Rycheco#NA1",
+  "Cav#5603":                   "Cav#5603",
+  "cav#5603":                   "Cav#5603",
+  "voodoo mantis#tft":          "Voodoo Mantis#TFT",
+  "Tonality#TFT":               "tonality#tft",
+  "bongwater123#NA1":           "bongwater123#NA1",
+  "ong #mong":                  "ong#mog",
+  "ambrosewinters#4466":        "AmbroseWinters #4466",
+  "AmbroseWinters #4466":       "AmbroseWinters #4466",
+  "Syrsheetz77#NA1":            "Syrsheetz77 #NA1",
+  "DSFC chabo#dsfc":            "ARA chabo#ara",
+  // ── New aliases ─────────────────────────────────────────────────
+  // Joe Bookmark = TurboturtleX#PMD
+  "TurboturtleX#PMD":           "Joe Bookmark",
+  // CLE#TFT = GanglyDestroyer67#TFT
+  "GanglyDestroyer67#TFT":      "CLE#TFT",
+  // Fungster#NA1 = ARA Fungster#fungu
+  "ARA Fungster#fungu":         "Fungster#NA1",
+  // invectiv#pmd = autumn#PMD
+  "autumn#PMD":                 "invectiv#pmd",
+  // harmony#cinna = cinna#dizzy
+  "cinna#dizzy":                "harmony#cinna",
+  // TheReaiHoneyBear #NA1 → canonical display name: TheRealHoneyBear
+  "TheReaiHoneyBear #NA1":      "TheRealHoneyBear",
+  "TheReaiHoneyBear#NA1":       "TheRealHoneyBear",
+  "Thereaihoneybear#NA1":       "TheRealHoneyBear",
+  "Thereaihoneybear#na1":       "TheRealHoneyBear",
+  // Pockygom = TL PockyGom#PMD
+  "TL PockyGom#PMD":            "Pockygom",
+  // TC5 aliases
+  "Ramkev#NA1":                 "RamKev #NA1",
+  "Harmony#cinna":              "harmony#cinna",
+  "JukeYou#NA2":                "JukeYou#NA1",
+  "KingCheshyre#NA1":           "KingCheshyre #NA1",
+  "Bobatea#30sgr":              "BobaTea #30sgr",
+  "Pallz #NA1":                 "Pallz#na1",
+  "BKY":                        "BunniKillYa#NA1",
+  // KEY1 aliases
+  "HEX Sylveon#HEX":            "Sylveon#HEX",
+  "bongwater123NA1":            "bongwater123#NA1",
+  "attractiv#na1":              "Attractiv#NA1",
+  "Filup#NA1":                  "Filup",
+  "Doofydoof53#NA2":            "DoofyDoof53#NA2",
+  "salsashark1113#1113":        "Salsashark1113#1113",
+};
+
+function resolve(name) { return ALIAS_MAP[name] || name; }
+
+const BASELINE = 1000, CONF_THRESH = 10;
+const BASE_PTS = {1:40,2:30,3:20,4:10,5:-10,6:-20,7:-30,8:-40};
+
+// ══════════════════════════════════════════════════════
+// TOURNAMENT DATA
+// ══════════════════════════════════════════════════════
+
+const TOURNAMENTS = [
+  { key:'gsc1', name:'Garden State Classic #1', date:'Oct 2024',
+    lobbies:{
+      1:{1:['RamKev #NA1','DimDanSum#DAN','Nekkra#5555','Cav#5603','cece#ysf','anime girl#kpop','Pallz#na1'],2:['PMD JOE BOOKMARK #PMD','freakyturk#NA2','kchevray#2086','Tomathyx','Dabba Nap#Tethi','Concrete#IVAR','FistofYang','tonality#tft'],3:['CLG HotshotGG#NA1','TL PockyGom#PMD','Cool Guy Dom','Faiz264#NA1','BunniKillYa#NA1','Prototype#aida','harmony #minji','kanav17#na1'],4:['Lab 025 Bass#LAB','Tetravoltex#jojo','Schısm#NA1','TheReaiHoneyBear #NA1','Haifuri','charismaacheck','Gangly#NA1']},
+      2:{1:['Cav#5603','Gangly#NA1','DimDanSum#DAN','Lab 025 Bass#LAB','Nekkra#5555','charismaacheck','Dabba Nap#Tethi'],2:['PMD JOE BOOKMARK #PMD','Cool Guy Dom','Tomathyx','Faiz264#NA1','FistofYang','kanav17#na1','BunniKillYa#NA1'],3:['harmony #minji','freakyturk#NA2','CLG HotshotGG#NA1','tonality#tft','TL PockyGom#PMD','kchevray#2086','Haifuri','Prototype#aida'],4:['Schısm#NA1','RamKev #NA1','TheReaiHoneyBear #NA1','Pallz#na1','Tetravoltex#jojo','anime girl#kpop','cece#ysf','Concrete#IVAR']},
+      3:{1:['PMD JOE BOOKMARK #PMD','harmony #minji','DimDanSum#DAN','kanav17#na1','FistofYang','anime girl#kpop','BunniKillYa#NA1'],2:['Schısm#NA1','Faiz264#NA1','CLG HotshotGG#NA1','Pallz#na1','Tomathyx','Nekkra#5555','Haifuri'],3:['TheReaiHoneyBear #NA1','Lab 025 Bass#LAB','TL PockyGom#PMD','Cool Guy Dom','charismaacheck','kchevray#2086','cece#ysf','Prototype#aida'],4:['RamKev #NA1','freakyturk#NA2','Cav#5603','Gangly#NA1','tonality#tft','Tetravoltex#jojo','Dabba Nap#Tethi','Concrete#IVAR']},
+      4:{1:['PMD JOE BOOKMARK #PMD','Cool Guy Dom','Faiz264#NA1','freakyturk#NA2','Nekkra#5555','anime girl#kpop','kchevray#2086'],2:['Schısm#NA1','TheReaiHoneyBear #NA1','Gangly#NA1','CLG HotshotGG#NA1','Cav#5603','Tetravoltex#jojo','tonality#tft','cece#ysf'],3:['RamKev #NA1','Lab 025 Bass#LAB','harmony #minji','Pallz#na1','Tomathyx','charismaacheck','Haifuri']},
+      5:{1:['RamKev #NA1','Gangly#NA1','CLG HotshotGG#NA1','PMD JOE BOOKMARK #PMD','TheReaiHoneyBear #NA1','tonality#tft','Faiz264#NA1','Tomathyx'],2:['Cool Guy Dom','Schısm#NA1','Lab 025 Bass#LAB','harmony #minji','freakyturk#NA2','Pallz#na1','Cav#5603','Nekkra#5555']},
+      6:{1:['Schısm#NA1','Cool Guy Dom','TheReaiHoneyBear #NA1','harmony #minji','Gangly#NA1','RamKev #NA1','Lab 025 Bass#LAB','CLG HotshotGG#NA1']}
+    },
+    results:{
+      "CLG HotshotGG#NA1":{1:{l:2,p:3},2:{l:3,p:3},3:{l:2,p:4},4:{l:2,p:1},5:{l:1,p:5},6:{l:1,p:2}},
+      "TheReaiHoneyBear #NA1":{1:{l:4,p:3},2:{l:4,p:1},3:{l:3,p:4},4:{l:2,p:4},5:{l:1,p:1},6:{l:1,p:7}},
+      "Gangly#NA1":{1:{l:4,p:2},2:{l:1,p:5},3:{l:4,p:1},4:{l:2,p:2},5:{l:1,p:3},6:{l:1,p:6}},
+      "RamKev #NA1":{1:{l:1,p:2},2:{l:4,p:2},3:{l:4,p:3},4:{l:3,p:1},5:{l:1,p:6},6:{l:1,p:4}},
+      "Cool Guy Dom":{1:{l:3,p:2},2:{l:2,p:5},3:{l:3,p:1},4:{l:1,p:1},5:{l:2,p:3},6:{l:1,p:1}},
+      "Schısm#NA1":{1:{l:4,p:1},2:{l:4,p:3},3:{l:2,p:3},4:{l:2,p:3},5:{l:2,p:1},6:{l:1,p:3}},
+      "harmony #minji":{1:{l:3,p:1},2:{l:3,p:4},3:{l:1,p:4},4:{l:3,p:2},5:{l:2,p:2},6:{l:1,p:5}},
+      "Lab 025 Bass#LAB":{1:{l:3,p:4},2:{l:1,p:1},3:{l:3,p:3},4:{l:3,p:3},5:{l:2,p:4},6:{l:1,p:8}},
+      "PMD JOE BOOKMARK #PMD":{1:{l:1,p:1},2:{l:2,p:2},3:{l:1,p:2},4:{l:1,p:6},5:{l:1,p:7}},
+      "Faiz264#NA1":{1:{l:3,p:4},2:{l:2,p:1},3:{l:2,p:5},4:{l:1,p:7},5:{l:1,p:1}},
+      "tonality#tft":{1:{l:2,p:4},2:{l:3,p:7},3:{l:4,p:4},4:{l:2,p:5},5:{l:1,p:8}},
+      "Tomathyx":{1:{l:2,p:3},2:{l:2,p:7},3:{l:2,p:6},4:{l:3,p:4},5:{l:1,p:4}},
+      "Nekkra#5555":{1:{l:1,p:5},2:{l:1,p:7},3:{l:2,p:2},4:{l:1,p:5},5:{l:2,p:6}},
+      "freakyturk#NA2":{1:{l:2,p:2},2:{l:3,p:2},3:{l:4,p:7},4:{l:1,p:2},5:{l:2,p:7}},
+      "Cav#5603":{1:{l:1,p:1},2:{l:1,p:6},3:{l:4,p:5},4:{l:2,p:6},5:{l:2,p:5}},
+      "Pallz#na1":{1:{l:1,p:4},2:{l:4,p:4},3:{l:2,p:1},4:{l:3,p:7},5:{l:2,p:8}},
+      "anime girl#kpop":{1:{l:1,p:6},2:{l:4,p:7},3:{l:1,p:5},4:{l:1,p:4}},
+      "cece#ysf":{1:{l:1,p:8},2:{l:4,p:5},3:{l:3,p:6},4:{l:2,p:7}},
+      "Tetravoltex#jojo":{1:{l:4,p:5},2:{l:4,p:6},3:{l:4,p:2},4:{l:2,p:8}},
+      "Haifuri":{1:{l:4,p:7},2:{l:3,p:6},3:{l:2,p:8},4:{l:3,p:8}},
+      "charismaacheck":{1:{l:4,p:6},2:{l:1,p:4},3:{l:3,p:5},4:{l:3,p:6}},
+      "BunniKillYa#NA1":{1:{l:3,p:7},2:{l:2,p:6},3:{l:1,p:1}},
+      "DimDanSum#DAN":{1:{l:1,p:3},2:{l:1,p:2},3:{l:1,p:8}},
+      "kanav17#na1":{1:{l:3,p:6},2:{l:2,p:3},3:{l:1,p:7}},
+      "FistofYang":{1:{l:2,p:5},2:{l:2,p:4},3:{l:1,p:3}},
+      "TL PockyGom#PMD":{1:{l:3,p:5},2:{l:3,p:1},3:{l:3,p:2}},
+      "kchevray#2086":{1:{l:2,p:6},2:{l:3,p:5},3:{l:3,p:8}},
+      "Prototype#aida":{1:{l:3,p:8},2:{l:3,p:8},3:{l:3,p:7}},
+      "Dabba Nap#Tethi":{1:{l:2,p:7},2:{l:1,p:8},3:{l:4,p:6}},
+      "Concrete#IVAR":{1:{l:2,p:8},2:{l:4,p:8},3:{l:4,p:8}}
+    }
+  },
+  { key:'emp1', name:'Empire Open #1', date:'Jan 2025',
+    lobbies:{
+      1:{1:['appies#spicy','Dot#NA69','soy garlic#NA1','Kchevray#2086','Grape TFT#XDD','higgyyyyyyyyyyyy#NA1','Lorence#TFT','craQ#NA1'],2:['Cool Guy Dom#dom','Toce#NA1','Schism#Ski','Bass#LAB','Cav#5603','bpotts#1234','Itsalljhinetics#Jhin4','gmario#NA1'],3:['Groxie#pmd','Meet#2610','weplays#NA1','TheReaiHoneyBear#NA1','BriarPatchy#8463','Rycheco#NA1','Nekkra#5555','aC0ldTurkey#TRKY'],4:['RamKev#NA1','cleanpuer#99999','DimDansum#DAN','Gangly#NA1','Tomathyx#ttv','oRisingTide#0420','Grank 15#NA1','Kellaay#ily2'],5:['joe#book','cinna#dizzy','ForWon6ix#SCTFT','BunniKillYa#sleep','JasonTheAsian#NA1','AmznglyRandy#NA1','ong #mong','ujinaa#NA1'],6:['dehua#one','bloody#cool','solaggytoday#na1','invectiv#pmd','CLG HotshotGG#NA1','Barbarian93','Visceral#1234','Cool Peng#AAAAA'],7:['Franchise#thee','Red40addict#mort','Laenos#NA1','Jadepelt#NA1','Jiddle#8628','winniiifreds#0820','Chrismaxx7#33006','Times#24601'],8:['ralphie#doa','Zatchaery#NA1','Protroid#HEX','ramenblitz#sctft','ThaisonTFT#PKMN','Morsetuney#NA1','DoofyDoof53#NA2','dayglo#real']},
+      2:{1:['AmznglyRandy#NA1','Meet#2610','soy garlic#NA1','Schism#Ski','appies#spicy','oRisingTide#0420','Cool Peng#AAAAA','invectiv#pmd'],2:['Morsetuney#NA1','ralphie#doa','Rycheco#NA1','Franchise#thee','Barbarian93','bpotts#1234','Protroid#HEX','Kellaay#ily2'],3:['ForWon6ix#SCTFT','Bass#LAB','Cool Guy Dom#dom','cleanpuer#99999','Laenos#NA1','TheReaiHoneyBear#NA1','Chrismaxx7#33006','ujinaa#NA1'],4:['RamKev#NA1','BriarPatchy#8463','Lorence#TFT','ramenblitz#sctft','dehua#one','dayglo#real','gmario#NA1','Zatchaery#NA1'],5:['Nekkra#5555','Dot#NA69','Jadepelt#NA1','solaggytoday#na1','Kchevray#2086','Grank 15#NA1','Times#24601','JasonTheAsian#NA1'],6:['Toce#NA1','joe#book','Cav#5603','bloody#cool','Visceral#1234','BunniKillYa#sleep','Jiddle#8628','winniiifreds#0820'],7:['aC0ldTurkey#TRKY','Gangly#NA1','Groxie#pmd','Tomathyx#ttv','CLG HotshotGG#NA1','DimDansum#DAN','higgyyyyyyyyyyyy#NA1','DoofyDoof53#NA2'],8:['cinna#dizzy','Grape TFT#XDD','ThaisonTFT#PKMN','weplays#NA1','Itsalljhinetics#Jhin4','craQ#NA1','Red40addict#mort','ong #mong']},
+      3:{1:['Morsetuney#NA1','Lorence#TFT','Gangly#NA1','Kchevray#2086','ralphie#doa','Chrismaxx7#33006','CLG HotshotGG#NA1','invectiv#pmd'],2:['BriarPatchy#8463','Schism#Ski','Toce#NA1','ThaisonTFT#PKMN','Grank 15#NA1','Visceral#1234','Protroid#HEX','Kellaay#ily2'],3:['ForWon6ix#SCTFT','solaggytoday#na1','joe#book','dehua#one','appies#spicy','gmario#NA1','Laenos#NA1','ujinaa#NA1'],4:['aC0ldTurkey#TRKY','Bass#LAB','Itsalljhinetics#Jhin4','Groxie#pmd','Meet#2610','Red40addict#mort','Times#24601','higgyyyyyyyyyyyy#NA1'],5:['cinna#dizzy','Grape TFT#XDD','Franchise#thee','dayglo#real','soy garlic#NA1','Cool Peng#AAAAA','DoofyDoof53#NA2','TheReaiHoneyBear#NA1'],6:['Nekkra#5555','RamKev#NA1','craQ#NA1','ramenblitz#sctft','Rycheco#NA1','BunniKillYa#sleep','Jiddle#8628','Zatchaery#NA1'],7:['Jadepelt#NA1','Cool Guy Dom#dom','Dot#NA69','Tomathyx#ttv','bloody#cool','Barbarian93','JasonTheAsian#NA1','winniiifreds#0820'],8:['AmznglyRandy#NA1','cleanpuer#99999','weplays#NA1','Cav#5603','bpotts#1234','DimDansum#DAN','oRisingTide#0420','ong #mong']},
+      4:{1:['AmznglyRandy#NA1','cinna#dizzy','Grape TFT#XDD','Meet#2610','soy garlic#NA1','ThaisonTFT#PKMN','weplays#NA1','Schism#Ski'],2:['Morsetuney#NA1','aC0ldTurkey#TRKY','Gangly#NA1','ralphie#doa','Rycheco#NA1','Groxie#pmd','Tomathyx#ttv','Franchise#thee'],3:['ForWon6ix#SCTFT','Toce#NA1','joe#book','Bass#LAB','Cool Guy Dom#dom','Cav#5603','bloody#cool','cleanpuer#99999'],4:['RamKev#NA1','Nekkra#5555','appies#spicy','BriarPatchy#8463','Barbarian93#BB93','Jadepelt#NA1','solaggytoday#na1','ramenblitz#sctft']},
+      5:{1:['AmznglyRandy#NA1','joe#book','Morsetuney#NA1','Bass#LAB','ForWon6ix#SCTFT','Cav#5603','cleanpuer#99999','Tomathyx#ttv'],2:['Toce#NA1','Gangly#NA1','aC0ldTurkey#TRKY','solaggytoday#na1','Franchise#thee','ThaisonTFT#PKMN','Rycheco#NA1','Barbarian93#BB93'],3:['Grape TFT#XDD','Meet#2610','bloody#cool','BriarPatchy#8463','weplays#NA1','Groxie#pmd','Cool Guy Dom#dom','Jadepelt#NA1'],4:['RamKev#NA1','ralphie#doa','ramenblitz#sctft','Nekkra#5555','cinna#dizzy','soy garlic#NA1','appies#spicy','Schism#Ski']},
+      6:{1:['Meet#2610','RamKev#NA1','Morsetuney#NA1','Grape TFT#XDD','joe#book','Gangly#NA1','ralphie#doa','Toce#NA1']}
+    },
+    results:{
+      "Morsetuney#NA1":{1:{l:8,p:1},2:{l:2,p:1},3:{l:1,p:4},4:{l:2,p:6},5:{l:1,p:1},6:{l:1,p:5}},
+      "joe#book":{1:{l:5,p:2},2:{l:6,p:5},3:{l:3,p:1},4:{l:3,p:3},5:{l:1,p:2},6:{l:1,p:1}},
+      "Gangly#NA1":{1:{l:4,p:4},2:{l:7,p:2},3:{l:1,p:2},4:{l:2,p:3},5:{l:2,p:2},6:{l:1,p:6}},
+      "Toce#NA1":{1:{l:2,p:6},2:{l:6,p:1},3:{l:2,p:1},4:{l:3,p:2},5:{l:2,p:6},6:{l:1,p:7}},
+      "Meet#2610":{1:{l:3,p:6},2:{l:1,p:3},3:{l:4,p:1},4:{l:1,p:1},5:{l:3,p:1},6:{l:1,p:4}},
+      "Grape TFT#XDD":{1:{l:1,p:3},2:{l:8,p:3},3:{l:5,p:2},4:{l:1,p:2},5:{l:3,p:3},6:{l:1,p:2}},
+      "ralphie#doa":{1:{l:8,p:7},2:{l:2,p:2},3:{l:1,p:1},4:{l:2,p:1},5:{l:4,p:4},6:{l:1,p:3}},
+      "RamKev#NA1":{1:{l:4,p:3},2:{l:4,p:2},3:{l:6,p:2},4:{l:4,p:3},5:{l:4,p:2},6:{l:1,p:8}},
+      "AmznglyRandy#NA1":{1:{l:5,p:4},2:{l:1,p:1},3:{l:8,p:1},4:{l:1,p:3},5:{l:1,p:8}},
+      "Tomathyx#ttv":{1:{l:4,p:5},2:{l:7,p:3},3:{l:7,p:3},4:{l:2,p:8},5:{l:1,p:6}},
+      "ForWon6ix#SCTFT":{1:{l:5,p:3},2:{l:3,p:1},3:{l:3,p:3},4:{l:3,p:8},5:{l:1,p:3}},
+      "Bass#LAB":{1:{l:2,p:4},2:{l:3,p:2},3:{l:4,p:3},4:{l:3,p:5},5:{l:1,p:4}},
+      "cleanpuer#99999":{1:{l:4,p:1},2:{l:3,p:4},3:{l:8,p:8},4:{l:3,p:4},5:{l:1,p:5}},
+      "Cav#5603":{1:{l:2,p:5},2:{l:6,p:3},3:{l:8,p:2},4:{l:3,p:6},5:{l:1,p:7}},
+      "ThaisonTFT#PKMN":{1:{l:8,p:2},2:{l:8,p:7},3:{l:2,p:2},4:{l:1,p:5},5:{l:2,p:1}},
+      "aC0ldTurkey#TRKY":{1:{l:3,p:3},2:{l:7,p:1},3:{l:4,p:4},4:{l:2,p:4},5:{l:2,p:7}},
+      "Franchise#thee":{1:{l:7,p:1},2:{l:2,p:7},3:{l:5,p:5},4:{l:2,p:2},5:{l:2,p:3}},
+      "Rycheco#NA1":{1:{l:3,p:4},2:{l:2,p:5},3:{l:6,p:1},4:{l:2,p:7},5:{l:2,p:4}},
+      "solaggytoday#na1":{1:{l:6,p:2},2:{l:5,p:4},3:{l:3,p:6},4:{l:4,p:2},5:{l:2,p:5}},
+      "Lorence#TFT":{1:{l:1,p:1},2:{l:4,p:5},3:{l:1,p:4}},
+      "weplays#NA1":{1:{l:3,p:5},2:{l:8,p:3},3:{l:8,p:3},4:{l:1,p:4},5:{l:3,p:5}},
+      "Groxie#pmd":{1:{l:3,p:8},2:{l:7,p:1},3:{l:4,p:2},4:{l:2,p:5},5:{l:3,p:2}},
+      "bloody#cool":{1:{l:6,p:3},2:{l:6,p:7},3:{l:7,p:2},4:{l:3,p:1},5:{l:3,p:7}},
+      "Cool Guy Dom#dom":{1:{l:2,p:1},2:{l:3,p:4},3:{l:7,p:5},4:{l:3,p:7},5:{l:3,p:4}},
+      "BriarPatchy#8463":{1:{l:3,p:1},2:{l:4,p:2},3:{l:2,p:6},4:{l:4,p:5},5:{l:3,p:6}},
+      "Jadepelt#NA1":{1:{l:7,p:2},2:{l:5,p:2},3:{l:7,p:6},4:{l:4,p:8},5:{l:3,p:8}},
+      "cinna#dizzy":{1:{l:5,p:1},2:{l:8,p:3},3:{l:5,p:4},4:{l:1,p:8},5:{l:4,p:7}},
+      "soy garlic#NA1":{1:{l:1,p:5},2:{l:1,p:4},3:{l:5,p:1},4:{l:1,p:6},5:{l:4,p:8}},
+      "Nekkra#5555":{1:{l:3,p:2},2:{l:5,p:2},3:{l:6,p:3},4:{l:4,p:7},5:{l:4,p:6}},
+      "ramenblitz#sctft":{1:{l:8,p:3},2:{l:4,p:5},3:{l:6,p:4},4:{l:4,p:1},5:{l:4,p:5}},
+      "appies#spicy":{1:{l:1,p:6},2:{l:1,p:3},3:{l:3,p:4},4:{l:4,p:4},5:{l:4,p:1}},
+      "Dot#NA69":{1:{l:1,p:2},2:{l:5,p:6},3:{l:7,p:1}},
+      "Schism#Ski":{1:{l:2,p:2},2:{l:1,p:4},3:{l:2,p:7},4:{l:1,p:7},5:{l:4,p:3}},
+      "Visceral#1234":{1:{l:6,p:5},2:{l:6,p:6},3:{l:2,p:3}},
+      "Kchevray#2086":{1:{l:1,p:7},2:{l:5,p:2},3:{l:1,p:5}},
+      "Chrismaxx7#33006":{1:{l:7,p:5},2:{l:3,p:6},3:{l:1,p:6}},
+      "Kellaay#ily2":{1:{l:4,p:8},2:{l:2,p:8},3:{l:2,p:8}},
+      "CLG HotshotGG#NA1":{1:{l:6,p:6},2:{l:7,p:5},3:{l:1,p:3}},
+      "invectiv#pmd":{1:{l:6,p:8},2:{l:1,p:8},3:{l:1,p:8}},
+      "Protroid#HEX":{1:{l:8,p:4},2:{l:2,p:8},3:{l:2,p:5}},
+      "Grank 15#NA1":{1:{l:4,p:2},2:{l:5,p:7},3:{l:2,p:7}},
+      "gmario#NA1":{1:{l:2,p:8},2:{l:4,p:3},3:{l:3,p:7}},
+      "Laenos#NA1":{1:{l:7,p:4},2:{l:3,p:8},3:{l:3,p:2}},
+      "dehua#one":{1:{l:6,p:1},2:{l:4,p:8},3:{l:3,p:5}},
+      "ujinaa#NA1":{1:{l:5,p:8},2:{l:3,p:8},3:{l:3,p:8}},
+      "higgyyyyyyyyyyyy#NA1":{1:{l:1,p:8},2:{l:7,p:7},3:{l:4,p:4}},
+      "Red40addict#mort":{1:{l:7,p:3},2:{l:8,p:8},3:{l:4,p:8}},
+      "Itsalljhinetics#Jhin4":{1:{l:2,p:7},2:{l:8,p:1},3:{l:4,p:7}},
+      "Times#24601":{1:{l:7,p:7},2:{l:5,p:5},3:{l:4,p:6}},
+      "dayglo#real":{1:{l:8,p:8},2:{l:4,p:1},3:{l:5,p:8}},
+      "DoofyDoof53#NA2":{1:{l:8,p:6},2:{l:7,p:6},3:{l:5,p:7}},
+      "TheReaiHoneyBear#NA1":{1:{l:3,p:7},2:{l:3,p:7},3:{l:5,p:3}},
+      "Cool Peng#AAAAA":{1:{l:6,p:7},2:{l:1,p:4},3:{l:5,p:6}},
+      "Jiddle#8628":{1:{l:7,p:6},2:{l:6,p:6},3:{l:6,p:6}},
+      "craQ#NA1":{1:{l:1,p:4},2:{l:8,p:4},3:{l:6,p:7}},
+      "BunniKillYa#sleep":{1:{l:5,p:5},2:{l:6,p:5},3:{l:6,p:5}},
+      "Zatchaery#NA1":{1:{l:8,p:5},2:{l:4,p:8},3:{l:6,p:8}},
+      "winniiifreds#0820":{1:{l:7,p:8},2:{l:6,p:5},3:{l:7,p:7}},
+      "Barbarian93#BB93":{4:{l:4,p:6},5:{l:2,p:8}},
+      "JasonTheAsian#NA1":{1:{l:5,p:7},2:{l:5,p:6},3:{l:7,p:8}},
+      "ong #mong":{1:{l:5,p:6},2:{l:8,p:7},3:{l:8,p:6}},
+      "DimDansum#DAN":{1:{l:4,p:6},2:{l:7,p:4},3:{l:8,p:5}},
+      "bpotts#1234":{1:{l:2,p:3},2:{l:2,p:7},3:{l:8,p:7}},
+      "oRisingTide#0420":{1:{l:4,p:7},2:{l:1,p:6},3:{l:8,p:4}}
+    }
+  },
+  { key:'key1', name:'Keystone Cup #1', date:'Feb 2025',
+    lobbies:{
+      1:{1:['Tor rereplay#rere','jdcnawy#moc','Syrsheetz77 #NA1','bongwater123NA1','Gangly#NA1','kchevray#2086','cav#5603','fitzhollo11#NA1'],2:['Filup#NA1','harmony#cinna','Tomathyx#ttv','BunniKillYa#sleep','HarryBolsax#6969','Zerotwo#uwuwu','Morsetuney#NA1','Crippl#NA1'],3:['Frodan#FRO','Franchise#thee','ThaisonTFT#PKMN','BriarPatchy#8463','solaggytoday#na1','Post Maclone#NA1','ełle#NA1','Bubbaa#NA1'],4:['Appies#spicy','Skyhawk634#1997','CLE#TFT','ramenblitz#sctft','salsashark1113#1113','Tropical#xdd','AmznglyRandy#NA1','Hens#7424'],5:['Meet#2610','mazz#meow','kektaku#rukia','attractiv#na1','ImJustNewbie#9791','Ge1ster#0310','Doofydoof53#NA2','Kennyso#5318'],6:['joe#book','Henree#750','RamKev#NA1','Jadepelt#NA1','Woest#3711','godofconquezt#NA1','Wonder of U#690','chard#nima'],7:['DSJ#trust','Maple#Arrow','rabeam#tqa','anticrystal#Redem','KylElyK#NA1','Grank 15 #NA1','Cowsssssss# uwu','Nekkra#5555'],8:['ralphie#doa','dirtypuer#dirty','HEX Sylveon#HEX','reniart#0000','StorM#2374','Thereaihoneybear #NA1','Yayu#uwu','cece#ysf']},
+      2:{1:['Tor rereplay#rere','ralphie#doa','Gangly#NA1','Thereaihoneybear #NA1','cav#5603','cece#ysf','kchevray#2086','Yayu#uwu'],2:['Filup#NA1','anticrystal#Redem','Crippl#NA1','Nekkra#5555','Morsetuney#NA1','DSJ#trust','HarryBolsax#6969','Cowsssssss# uwu'],3:['Bubbaa#NA1','RamKev#NA1','ełle#NA1','Henree#750','Ge1ster#0310','joe#book','Tomathyx#ttv','BunniKillYa#sleep'],4:['Appies#spicy','Doofydoof53#NA2','CLE#TFT','Kennyso#5318','ramenblitz#sctft','AmznglyRandy#NA1','ImJustNewbie#9791','kektaku#rukia'],5:['Meet#2610','mazz#meow','Tropical#xdd','attractiv#na1','Ge1ster#0310','Skyhawk634#1997','salsashark1113#1113','Hens#7424'],6:['Frodan#FRO','Post Maclone#NA1','Wonder of U#690','godofconquezt#NA1','ThaisonTFT#PKMN','Franchise#thee','Woest#3711','chard#nima'],7:['rabeam#tqa','Maple#Arrow','Zerotwo#uwuwu','harmony#cinna','KylElyK#NA1','BunniKillYa#sleep','Grank 15 #NA1','Tomathyx#ttv'],8:['HEX Sylveon#HEX','bongwater123NA1','dirtypuer#dirty','jdcnawy#moc','reniart#0000','StorM#2374','fitzhollo11#NA1','Syrsheetz77 #NA1']},
+      3:{1:['Appies#spicy','Kennyso#5318','ThaisonTFT#PKMN','harmony#cinna','Gangly#NA1','BriarPatchy#8463','Franchise#thee','fitzhollo11#NA1'],2:['Tor rereplay#rere','Nekkra#5555','CLE#TFT','anticrystal#Redem','Maple#Arrow','attractiv#na1','DSJ#trust','Cowsssssss# uwu'],3:['joe#book','Thereaihoneybear #NA1','Ge1ster#0310','Morsetuney#NA1','ralphie#doa','bongwater123NA1','BunniKillYa#sleep','kchevray#2086'],4:['rabeam#tqa','RamKev#NA1','ImJustNewbie#9791','cav#5603','Jadepelt#NA1','kektaku#rukia','Hens#7424','salsashark1113#1113'],5:['HEX Sylveon#HEX','Filup#NA1','mazz#meow','BriarPatchy#8463','ralphie#doa','godofconquezt#NA1','Doofydoof53#NA2','Crippl#NA1'],6:['jdcnawy#moc','Woest#3711','Wonder of U#690','reniart#0000','Skyhawk634#1997','Post Maclone#NA1','Syrsheetz77 #NA1','Doofydoof53#NA2'],7:['DSJ#trust','rabeam#tqa','Frodan#FRO','Zerotwo#uwuwu','StorM#2374','AmznglyRandy#NA1','solaggytoday#na1','Gangly#NA1'],8:['Bubbaa#NA1','Henree#750','HarryBolsax#6969','ramenblitz#sctft','Meet#2610','dirtypuer#dirty','Grank 15 #NA1','cece#ysf']},
+      4:{1:['Appies#spicy','HEX Sylveon#HEX','Bubbaa#NA1','Filup#NA1','Gangly#NA1','ełle#NA1','KylElyK#NA1','Morsetuney#NA1'],2:['Tor rereplay#rere','rabeam#tqa','Woest#3711','mazz#meow','Crippl#NA1','Maple#Arrow','Frodan#FRO','attractiv#na1'],3:['joe#book','RamKev#NA1','ralphie#doa','dirtypuer#dirty','jdcnawy#moc','StorM#2374','Zerotwo#uwuwu','Ge1ster#0310'],4:['Tropical#xdd','Henree#750','bongwater123NA1','ramenblitz#sctft','cav#5603','Doofydoof53#NA2','Tomathyx#ttv','CLE#TFT']},
+      5:{1:['Appies#spicy','cav#5603','mazz#meow','Woest#3711','HEX Sylveon#HEX','Morsetuney#NA1','Frodan#FRO','KylElyK#NA1'],2:['joe#book','Henree#750','Gangly#NA1','Ge1ster#0310','dirtypuer#dirty','jdcnawy#moc','ełle#NA1','attractiv#na1'],3:['Tropical#xdd','rabeam#tqa','Maple#Arrow','ralphie#doa','bongwater123NA1','Woest#3711','CLE#TFT','Zerotwo#uwuwu'],4:['Tor rereplay#rere','RamKev#NA1','Filup#NA1','Bubbaa#NA1','StorM#2374','ramenblitz#sctft','Tomathyx#ttv','Doofydoof53#NA2']},
+      6:{1:['Tor rereplay#rere','Gangly#NA1','RamKev#NA1','Bubbaa#NA1','Henree#750','bongwater123NA1','Frodan#FRO','Tomathyx#ttv'],2:['Appies#spicy','rabeam#tqa','Filup#NA1','HEX Sylveon#HEX','CLE#TFT','Morsetuney#NA1','Ge1ster#0310','jdcnawy#moc'],3:['joe#book','Tropical#xdd','mazz#meow','dirtypuer#dirty','ralphie#doa','Maple#Arrow','Woest#3711','Zerotwo#uwuwu']},
+      7:{1:['Tor rereplay#rere','Tropical#xdd','Appies#spicy','joe#book','RamKev#NA1','Henree#750','rabeam#tqa','Bubbaa#NA1']}
+    },
+    results:{
+      "AmznglyRandy#NA1":{1:{l:4,p:5},2:{l:4,p:8},3:{l:7,p:4}},
+      "anticrystal#Redem":{1:{l:7,p:2},2:{l:2,p:7},3:{l:2,p:7}},
+      "Appies#spicy":{1:{l:4,p:1},2:{l:4,p:1},3:{l:1,p:1},4:{l:1,p:1},5:{l:1,p:5},6:{l:2,p:7},7:{l:1,p:2}},
+      "attractiv#na1":{1:{l:5,p:6},2:{l:4,p:5},3:{l:2,p:2},4:{l:2,p:7},5:{l:2,p:8}},
+      "bongwater123NA1":{1:{l:1,p:2},2:{l:8,p:5},3:{l:6,p:2},4:{l:4,p:4},5:{l:4,p:6},6:{l:1,p:8}},
+      "BriarPatchy#8463":{1:{l:3,p:5},2:{l:3,p:6},3:{l:1,p:3}},
+      "Bubbaa#NA1":{1:{l:3,p:1},2:{l:3,p:3},3:{l:8,p:4},4:{l:1,p:6},5:{l:3,p:3},6:{l:1,p:3},7:{l:1,p:8}},
+      "BunniKillYa#sleep":{1:{l:2,p:4},2:{l:7,p:4},3:{l:7,p:7}},
+      "cav#5603":{1:{l:1,p:5},2:{l:1,p:4},3:{l:4,p:2},4:{l:4,p:1},5:{l:1,p:7},6:{l:2,p:8}},
+      "cece#ysf":{1:{l:8,p:6},2:{l:1,p:8},3:{l:7,p:6}},
+      "chard#nima":{1:{l:6,p:7},2:{l:6,p:1},3:{l:7,p:8}},
+      "CLE#TFT":{1:{l:4,p:3},2:{l:4,p:4},3:{l:2,p:6},4:{l:4,p:3},5:{l:4,p:2},6:{l:2,p:3}},
+      "Cowsssssss# uwu":{1:{l:7,p:8},2:{l:2,p:8},3:{l:2,p:4}},
+      "Crippl#NA1":{1:{l:2,p:3},2:{l:2,p:5},3:{l:5,p:3},4:{l:2,p:8},5:{l:3,p:7}},
+      "dirtypuer#dirty":{1:{l:8,p:3},2:{l:8,p:6},3:{l:3,p:1},4:{l:3,p:5},5:{l:2,p:5},6:{l:3,p:1}},
+      "Doofydoof53#NA2":{1:{l:5,p:2},2:{l:4,p:2},3:{l:6,p:8},4:{l:4,p:8},5:{l:4,p:8}},
+      "DSJ#trust":{1:{l:7,p:6},2:{l:2,p:6},3:{l:2,p:8}},
+      "ełle#NA1":{1:{l:3,p:3},2:{l:3,p:8},3:{l:3,p:3},4:{l:1,p:5},5:{l:2,p:7}},
+      "Filup#NA1":{1:{l:2,p:1},2:{l:2,p:4},3:{l:5,p:5},4:{l:1,p:3},5:{l:4,p:3},6:{l:2,p:5}},
+      "fitzhollo11#NA1":{1:{l:1,p:8},2:{l:8,p:8},3:{l:1,p:8}},
+      "Franchise#thee":{1:{l:3,p:8},2:{l:6,p:4},3:{l:1,p:4}},
+      "Frodan#FRO":{1:{l:3,p:2},2:{l:6,p:8},3:{l:7,p:3},4:{l:2,p:6},5:{l:1,p:1},6:{l:1,p:4}},
+      "Gangly#NA1":{1:{l:1,p:3},2:{l:1,p:6},3:{l:1,p:2},4:{l:1,p:2},5:{l:2,p:1},6:{l:1,p:7}},
+      "Ge1ster#0310":{1:{l:5,p:1},2:{l:5,p:6},3:{l:3,p:6},4:{l:3,p:1},5:{l:2,p:2},6:{l:3,p:8}},
+      "godofconquezt#NA1":{1:{l:6,p:5},2:{l:6,p:5},3:{l:5,p:7}},
+      "Grank 15 #NA1":{1:{l:7,p:7},2:{l:7,p:7},3:{l:8,p:2}},
+      "harmony#cinna":{1:{l:2,p:6},2:{l:7,p:3},3:{l:1,p:6}},
+      "HarryBolsax#6969":{1:{l:2,p:7},2:{l:2,p:1},3:{l:8,p:7}},
+      "Henree#750":{1:{l:6,p:4},2:{l:3,p:1},3:{l:8,p:1},4:{l:4,p:5},5:{l:2,p:6},6:{l:1,p:1},7:{l:1,p:6}},
+      "Hens#7424":{1:{l:4,p:7},2:{l:4,p:6},3:{l:5,p:6}},
+      "HEX Sylveon#HEX":{1:{l:8,p:1},2:{l:8,p:2},3:{l:5,p:4},4:{l:1,p:8},5:{l:1,p:2},6:{l:2,p:6}},
+      "ImJustNewbie#9791":{1:{l:5,p:3},2:{l:5,p:5},3:{l:4,p:5}},
+      "Jadepelt#NA1":{1:{l:6,p:8},2:{l:3,p:5},3:{l:4,p:8}},
+      "jdcnawy#moc":{1:{l:1,p:4},2:{l:8,p:1},3:{l:6,p:6},4:{l:3,p:6},5:{l:2,p:4},6:{l:2,p:2}},
+      "joe#book":{1:{l:6,p:1},2:{l:6,p:2},3:{l:3,p:2},4:{l:3,p:2},5:{l:2,p:3},6:{l:3,p:7},7:{l:1,p:3}},
+      "kchevray#2086":{1:{l:1,p:7},2:{l:1,p:1},3:{l:8,p:6}},
+      "kektaku#rukia":{1:{l:5,p:8},2:{l:4,p:7},3:{l:4,p:7}},
+      "Kennyso#5318":{1:{l:5,p:4},2:{l:4,p:3},3:{l:1,p:7}},
+      "KylElyK#NA1":{1:{l:7,p:5},2:{l:7,p:5},3:{l:4,p:3},4:{l:1,p:7},5:{l:1,p:8}},
+      "Maple#Arrow":{1:{l:7,p:3},2:{l:7,p:6},3:{l:2,p:3},4:{l:2,p:1},5:{l:3,p:6},6:{l:3,p:4}},
+      "mazz#meow":{1:{l:5,p:5},2:{l:5,p:4},3:{l:5,p:1},4:{l:2,p:2},5:{l:1,p:4},6:{l:3,p:5}},
+      "Meet#2610":{1:{l:5,p:7},2:{l:5,p:3},3:{l:8,p:5}},
+      "Morsetuney#NA1":{1:{l:2,p:5},2:{l:2,p:2},3:{l:4,p:6},4:{l:1,p:4},5:{l:1,p:3},6:{l:2,p:1}},
+      "Nekkra#5555":{1:{l:7,p:4},2:{l:2,p:3},3:{l:2,p:5}},
+      "Post Maclone#NA1":{1:{l:3,p:6},2:{l:6,p:6},3:{l:3,p:8}},
+      "rabeam#tqa":{1:{l:7,p:1},2:{l:7,p:2},3:{l:4,p:4},4:{l:2,p:3},5:{l:3,p:4},6:{l:2,p:4},7:{l:1,p:7}},
+      "ralphie#doa":{1:{l:8,p:2},2:{l:1,p:5},3:{l:5,p:2},4:{l:3,p:8},5:{l:3,p:1},6:{l:3,p:3}},
+      "ramenblitz#sctft":{1:{l:4,p:2},2:{l:5,p:2},3:{l:7,p:5},4:{l:4,p:7},5:{l:4,p:7}},
+      "RamKev#NA1":{1:{l:6,p:2},2:{l:3,p:4},3:{l:4,p:1},4:{l:3,p:3},5:{l:4,p:5},6:{l:1,p:2},7:{l:1,p:5}},
+      "reniart#0000":{1:{l:8,p:5},2:{l:8,p:4},3:{l:6,p:5}},
+      "salsashark1113#1113":{1:{l:4,p:8},2:{l:5,p:7},3:{l:3,p:5}},
+      "Skyhawk634#1997":{1:{l:4,p:6},2:{l:5,p:8},3:{l:6,p:4}},
+      "solaggytoday#na1":{1:{l:3,p:7},2:{l:3,p:7},3:{l:8,p:8}},
+      "StorM#2374":{1:{l:8,p:7},2:{l:8,p:3},3:{l:7,p:2},4:{l:3,p:4},5:{l:3,p:8}},
+      "Syrsheetz77 #NA1":{1:{l:1,p:6},2:{l:8,p:7},3:{l:6,p:3}},
+      "ThaisonTFT#PKMN":{1:{l:3,p:4},2:{l:6,p:3},3:{l:1,p:5}},
+      "Thereaihoneybear #NA1":{1:{l:8,p:4},2:{l:1,p:3},3:{l:3,p:7}},
+      "Tomathyx#ttv":{1:{l:2,p:8},2:{l:7,p:1},3:{l:3,p:4},4:{l:4,p:6},5:{l:4,p:4},6:{l:1,p:6}},
+      "Tor rereplay#rere":{1:{l:1,p:1},2:{l:1,p:2},3:{l:2,p:1},4:{l:2,p:4},5:{l:4,p:1},6:{l:1,p:5},7:{l:1,p:1}},
+      "Tropical#xdd":{1:{l:4,p:4},2:{l:5,p:1},3:{l:7,p:1},4:{l:4,p:2},5:{l:3,p:2},6:{l:3,p:2},7:{l:1,p:4}},
+      "Woest#3711":{1:{l:6,p:6},2:{l:3,p:2},3:{l:6,p:1},4:{l:2,p:5},5:{l:1,p:6},6:{l:3,p:6}},
+      "Wonder of U#690":{1:{l:6,p:3},2:{l:6,p:7},3:{l:6,p:7}},
+      "Yayu#uwu":{1:{l:8,p:8},2:{l:1,p:7},3:{l:5,p:8}},
+      "Zerotwo#uwuwu":{1:{l:2,p:2},2:{l:7,p:8},3:{l:8,p:3},4:{l:3,p:7},5:{l:3,p:5}}
+    }
+  },
+  { key:'gsc2', name:'Garden State Classic #2', date:'Apr 2025',
+    lobbies:{
+      1:{1:['ralphie#doa','jdcnawy#moc','bpotts#1234','BobaTea #30sgr','Grank 15 #NA1','gremlin#lel','ong#mog','ramenblitz#sctft'],2:['Appies#spicy','Henree#750','Dchan31#NA1','Duchess of Deer#yuri','Chaika#fly','Rycheco#NA1','Attackoftherick#NA1','Gangly#NA1'],3:['harmony#cinna','BunniKillYa#sleep','CLE#TFT','COBALY#WOOP','YarGraY#NA1','AmznglyRandy#NA1','Visceral#1234','ForWon6ix#SCTFT'],4:['joe#book','DSFC chabo#dsfc','KylElyK#NA1','Tomathyx#ttv','edgevnv#NA1','BriarPatchy#8463','Fitzhollo11 #NA1','DimDanSum#Dan'],5:['skyhawk634#LQD','Franchise#thee','Crippl#NA1','bongwater123#NA1','Cav#5603','noeyeat#NA1','KingCheshyre #NA1','RamKev#NA1']},
+      2:{1:['jdcnawy#moc','bongwater123#NA1','gremlin#lel','KingCheshyre #NA1','Grank 15 #NA1','Cav#5603','bpotts#1234','skyhawk634#LQD'],2:['Dchan31#NA1','DimDanSum#Dan','Gangly#NA1','BriarPatchy#8463','Attackoftherick#NA1','Tomathyx#ttv','Chaika#fly','Fitzhollo11 #NA1'],3:['BunniKillYa#sleep','AmznglyRandy#NA1','Visceral#1234','harmony#cinna','COBALY#WOOP','ForWon6ix#SCTFT','YarGraY#NA1','CLE#TFT'],4:['joe#book','Henree#750','DSFC chabo#dsfc','Duchess of Deer#yuri','KylElyK#NA1','Appies#spicy','edgevnv#NA1','Rycheco#NA1'],5:['noeyeat#NA1','ralphie#doa','RamKev#NA1','ramenblitz#sctft','Franchise#thee','BobaTea #30sgr','Crippl#NA1','ong#mog']},
+      3:{1:['jdcnawy#moc','Gangly#NA1','BriarPatchy#8463','Grank 15 #NA1','harmony#cinna','Visceral#1234','Duchess of Deer#yuri','ong#mog'],2:['bongwater123#NA1','joe#book','Appies#spicy','gremlin#lel','Franchise#thee','KylElyK#NA1','Crippl#NA1','Rycheco#NA1'],3:['DimDanSum#Dan','Dchan31#NA1','DSFC chabo#dsfc','noeyeat#NA1','bpotts#1234','COBALY#WOOP','KingCheshyre #NA1','CLE#TFT'],4:['BunniKillYa#sleep','RamKev#NA1','ramenblitz#sctft','BobaTea #30sgr','YarGraY#NA1','Cav#5603','Attackoftherick#NA1','Fitzhollo11 #NA1'],5:['AmznglyRandy#NA1','Henree#750','Tomathyx#ttv','ralphie#doa','edgevnv#NA1','ForWon6ix#SCTFT','Chaika#fly','skyhawk634#LQD']},
+      4:{1:['RamKev#NA1','Henree#750','BriarPatchy#8463','DimDanSum#Dan','ramenblitz#sctft','KylElyK#NA1','BobaTea #30sgr','COBALY#WOOP'],2:['jdcnawy#moc','bongwater123#NA1','Appies#spicy','Tomathyx#ttv','harmony#cinna','Franchise#thee','Grank 15 #NA1','CLE#TFT'],3:['AmznglyRandy#NA1','joe#book','Dchan31#NA1','ralphie#doa','noeyeat#NA1','Cav#5603','gremlin#lel','edgevnv#NA1']},
+      5:{1:['jdcnawy#moc','Dchan31#NA1','Tomathyx#ttv','Appies#spicy','bongwater123#NA1','harmony#cinna','Cav#5603','KylElyK#NA1'],2:['joe#book','ramenblitz#sctft','DimDanSum#Dan','Franchise#thee','BobaTea #30sgr','COBALY#WOOP','edgevnv#NA1','CLE#TFT'],3:['Henree#750','RamKev#NA1','AmznglyRandy#NA1','BriarPatchy#8463','ralphie#doa','noeyeat#NA1','Grank 15 #NA1','gremlin#lel']},
+      6:{1:['joe#book','Henree#750','Dchan31#NA1','ramenblitz#sctft','Franchise#thee','Appies#spicy','Tomathyx#ttv','noeyeat#NA1'],2:['RamKev#NA1','jdcnawy#moc','DimDanSum#Dan','bongwater123#NA1','AmznglyRandy#NA1','ralphie#doa','BriarPatchy#8463','edgevnv#NA1']},
+      7:{1:['joe#book','Dchan31#NA1','RamKev#NA1','jdcnawy#moc','Henree#750','DimDanSum#Dan','ralphie#doa','Franchise#thee']}
+    },
+    results:{
+      "joe#book":{1:{l:4,p:1},2:{l:4,p:5},3:{l:2,p:1},4:{l:3,p:1},5:{l:2,p:1},6:{l:1,p:2},7:{l:1,p:1}},
+      "Dchan31#NA1":{1:{l:2,p:1},2:{l:2,p:5},3:{l:3,p:3},4:{l:3,p:3},5:{l:1,p:1},6:{l:1,p:1},7:{l:1,p:2}},
+      "RamKev#NA1":{1:{l:5,p:3},2:{l:5,p:1},3:{l:4,p:1},4:{l:1,p:5},5:{l:3,p:1},6:{l:2,p:3},7:{l:1,p:8}},
+      "Franchise#thee":{1:{l:5,p:5},2:{l:5,p:4},3:{l:2,p:4},4:{l:2,p:1},5:{l:2,p:3},6:{l:1,p:3},7:{l:1,p:3}},
+      "Henree#750":{1:{l:2,p:2},2:{l:4,p:2},3:{l:5,p:4},4:{l:1,p:2},5:{l:3,p:3},6:{l:1,p:5},7:{l:1,p:6}},
+      "jdcnawy#moc":{1:{l:1,p:1},2:{l:1,p:2},3:{l:1,p:3},4:{l:2,p:2},5:{l:1,p:5},6:{l:2,p:4},7:{l:1,p:7}},
+      "ralphie#doa":{1:{l:1,p:2},2:{l:5,p:6},3:{l:5,p:1},4:{l:3,p:8},5:{l:3,p:2},6:{l:2,p:1},7:{l:1,p:4}},
+      "DimDanSum#Dan":{1:{l:4,p:2},2:{l:2,p:1},3:{l:3,p:7},4:{l:1,p:3},5:{l:2,p:2},6:{l:2,p:5},7:{l:1,p:5}},
+      "Appies#spicy":{1:{l:2,p:6},2:{l:4,p:1},3:{l:2,p:2},4:{l:2,p:6},5:{l:1,p:4},6:{l:1,p:4}},
+      "bongwater123#NA1":{1:{l:5,p:2},2:{l:1,p:1},3:{l:2,p:5},4:{l:2,p:7},5:{l:1,p:2},6:{l:2,p:6}},
+      "BriarPatchy#8463":{1:{l:4,p:4},2:{l:2,p:3},3:{l:1,p:2},4:{l:1,p:4},5:{l:3,p:8},6:{l:2,p:2}},
+      "ramenblitz#sctft":{1:{l:1,p:4},2:{l:5,p:3},3:{l:4,p:3},4:{l:1,p:1},5:{l:2,p:6},6:{l:1,p:7}},
+      "AmznglyRandy#NA1":{1:{l:3,p:2},2:{l:3,p:1},3:{l:5,p:3},4:{l:3,p:7},5:{l:3,p:5},6:{l:2,p:7}},
+      "Tomathyx#ttv":{1:{l:4,p:6},2:{l:2,p:2},3:{l:5,p:2},4:{l:2,p:3},5:{l:1,p:7},6:{l:1,p:8}},
+      "noeyeat#NA1":{1:{l:5,p:1},2:{l:5,p:7},3:{l:3,p:4},4:{l:3,p:5},5:{l:3,p:7},6:{l:1,p:6}},
+      "edgevnv#NA1":{1:{l:4,p:7},2:{l:4,p:3},3:{l:5,p:7},4:{l:3,p:2},5:{l:2,p:4},6:{l:2,p:8}},
+      "KylElyK#NA1":{1:{l:4,p:5},2:{l:4,p:6},3:{l:2,p:3},4:{l:1,p:7},5:{l:1,p:3}},
+      "Grank 15 #NA1":{1:{l:1,p:5},2:{l:1,p:4},3:{l:1,p:6},4:{l:2,p:5},5:{l:3,p:4}},
+      "Cav#5603":{1:{l:5,p:6},2:{l:1,p:5},3:{l:4,p:2},4:{l:3,p:6},5:{l:1,p:6}},
+      "BunniKillYa#sleep":{1:{l:3,p:1},2:{l:3,p:2},3:{l:4,p:4}},
+      "CLE#TFT":{1:{l:3,p:8},2:{l:3,p:7},3:{l:3,p:2},4:{l:2,p:4},5:{l:2,p:5}},
+      "harmony#cinna":{1:{l:3,p:4},2:{l:3,p:5},3:{l:1,p:1},4:{l:2,p:8},5:{l:1,p:8}},
+      "gremlin#lel":{1:{l:1,p:3},2:{l:1,p:6},3:{l:2,p:7},4:{l:3,p:4},5:{l:3,p:6}},
+      "DSFC chabo#dsfc":{1:{l:4,p:3},2:{l:4,p:4},3:{l:3,p:1}},
+      "COBALY#WOOP":{1:{l:3,p:5},2:{l:3,p:6},3:{l:3,p:5},4:{l:1,p:6},5:{l:2,p:7}},
+      "Gangly#NA1":{1:{l:2,p:3},2:{l:2,p:4},3:{l:1,p:4}},
+      "BobaTea #30sgr":{1:{l:1,p:6},2:{l:5,p:2},3:{l:4,p:6},4:{l:1,p:8},5:{l:2,p:8}},
+      "Visceral#1234":{1:{l:3,p:3},2:{l:3,p:8},3:{l:1,p:5}},
+      "bpotts#1234":{1:{l:1,p:7},2:{l:1,p:3},3:{l:3,p:6}},
+      "ForWon6ix#SCTFT":{1:{l:3,p:6},2:{l:3,p:4},3:{l:5,p:6}},
+      "YarGraY#NA1":{1:{l:3,p:7},2:{l:3,p:3},3:{l:4,p:7}},
+      "Attackoftherick#NA1":{1:{l:2,p:5},2:{l:2,p:8},3:{l:4,p:5}},
+      "Duchess of Deer#yuri":{1:{l:2,p:4},2:{l:4,p:7},3:{l:1,p:8}},
+      "Crippl#NA1":{1:{l:5,p:7},2:{l:5,p:5},3:{l:2,p:8}},
+      "KingCheshyre #NA1":{1:{l:5,p:4},2:{l:1,p:8},3:{l:3,p:8}},
+      "skyhawk634#LQD":{1:{l:5,p:8},2:{l:1,p:7},3:{l:5,p:5}},
+      "Chaika#fly":{1:{l:2,p:7},2:{l:2,p:6},3:{l:5,p:8}},
+      "Rycheco#NA1":{1:{l:2,p:8},2:{l:4,p:8},3:{l:2,p:6}},
+      "ong#mog":{1:{l:1,p:8},2:{l:5,p:8},3:{l:1,p:7}},
+      "Fitzhollo11 #NA1":{1:{l:4,p:8},2:{l:2,p:7},3:{l:4,p:8}}
+    }
+  },
+  { key:'tc5', name:'Tristate Championship 5', date:'May 2025',
+    lobbies:{
+      1:{1:["ralphie#doa","salad1#5955","duckling smasher#1234","solaggytoday#na1","Pallz #NA1","Morsetuney#NA1","autumn#PMD","siked#uwu"],2:["Cool Guy Dom#dom","HennyK#hngry","Daddy#TFT","BunniKillYa#sleep","DimDanSum#DAN","koto#vtu","Juishwa#NA1","S3cr3t#0000"],3:["Harmony#cinna","DSFC chabo#dsfc","botumi#meow","JukeYou#NA2","Leaf#0748","Purpose#001","SZK isjerboa#TOTT"],4:["井底之蛙#5162","SecretSilvio#munch","Fungster#NA1","Minoi#monky","edgevnv#NA1","kchevray#2086","Kaizho#NA1","Klimer#HHA"],5:["appies#spicy","GForceMAX#NA1","temper#1212","jubjub17#Jub","Gangly#NA1","lavender#001"],6:["Ramkev#NA1","joe#book","Wololo#wol0","Lovita#667","Dchan31#NA1","Bobatea#30sgr","Bass#LAB"],7:["garet#na1","35711#NA1","Tomathyx#ttv","Pikaseul#NA1","Shamus Day#NA1","Barbarian93#BB93"],8:["Max Ketchum#NA1","bloody#cool","pattongeo#NA1","Plorange#NULL","alanxluc#1221","KingCheshyre#NA1"]},
+      2:{1:["DSFC chabo#dsfc","Cool Guy Dom#dom","Purpose#001","Juishwa#NA1","Harmony#cinna","DimDanSum#DAN","JukeYou#NA1","HennyK#hngry"],2:["Fungster#NA1","autumn#PMD","井底之蛙#5162","salad1#5955","Minoi#monky","duckling smasher#1234","Kaizho#NA1","Morsetuney#NA1"],3:["siked#uwu","SecretSilvio#munch","solaggytoday#na1","kchevray#2086","ralphie#doa","edgevnv#NA1","Pallz #NA1","Klimer#HHA"],4:["Daddy#TFT","SZK isjerboa#TOTT","BunniKillYa#sleep","Leaf#0748","koto#vtu","botumi#meow","S3cr3t#0000"],5:["bloody#cool","jubjub17#Jub","appies#spicy","KingCheshyre#NA1","GForceMAX#NA1"],6:["Ramkev#NA1","Tomathyx#ttv","Bobatea#30sgr","Pikaseul#NA1","Barbarian93#BB93","Lovita#667"],7:["garet#na1","Wololo#wol0","35711#NA1","Dchan31#NA1","Shamus Day#NA1","Bass#LAB","joe#book"],8:["alanxluc#1221","lavender#001","Plorange#NULL","Gangly#NA1","Max Ketchum#NA1","temper#1212","pattongeo#NA1"]},
+      3:{1:["Daddy#TFT","edgevnv#NA1","BunniKillYa#sleep","HennyK#hngry","JukeYou#NA1","kchevray#2086","Cool Guy Dom#dom"],2:["井底之蛙#5162","Fungster#NA1","koto#vtu","Minoi#monky","Pallz #NA1","salad1#5955","S3cr3t#0000","Klimer#HHA"],3:["autumn#PMD","DSFC chabo#dsfc","SecretSilvio#munch","Harmony#cinna","Purpose#001","duckling smasher#1234","botumi#meow","Morsetuney#NA1"],4:["SZK isjerboa#TOTT","solaggytoday#na1","siked#uwu","Juishwa#NA1","ralphie#doa","Leaf#0748","DimDanSum#DAN","Kaizho#NA1"],5:["garet#na1","jubjub17#Jub","Gangly#NA1","Lovita#667","Pikaseul#NA1","pattongeo#NA1","Bass#LAB"],6:["Ramkev#NA1","lavender#001","bloody#cool","GForceMAX#NA1","Max Ketchum#NA1"],7:["Plorange#NULL","Wololo#wol0","appies#spicy","Dchan31#NA1","temper#1212","Barbarian93#BB93"],8:["alanxluc#1221","Tomathyx#ttv","Bobatea#30sgr","35711#NA1","joe#book","Shamus Day#NA1","KingCheshyre#NA1"]},
+      4:{1:["garet#na1","bloody#cool","Bobatea#30sgr","autumn#PMD","Tomathyx#ttv","jubjub17#Jub","duckling smasher#1234","kchevray#2086"],2:["Ramkev#NA1","appies#spicy","Plorange#NULL","JukeYou#NA1","Minoi#monky","Wololo#wol0","salad1#5955","koto#vtu"],3:["Daddy#TFT","lavender#001","35711#NA1","Cool Guy Dom#dom","solaggytoday#na1","Juishwa#NA1","Harmony#cinna","pattongeo#NA1"],4:["alanxluc#1221","SZK isjerboa#TOTT","Fungster#NA1","Lovita#667","Gangly#NA1","GForceMAX#NA1","Dchan31#NA1","BunniKillYa#sleep"]},
+      5:{1:["garet#na1","autumn#PMD","SZK isjerboa#TOTT","solaggytoday#na1","lavender#001","Juishwa#NA1","Wololo#wol0","koto#vtu"],2:["alanxluc#1221","Fungster#NA1","Plorange#NULL","Tomathyx#ttv","Bobatea#30sgr","Lovita#667","Minoi#monky","pattongeo#NA1"],3:["Ramkev#NA1","bloody#cool","Harmony#cinna","35711#NA1","salad1#5955","duckling smasher#1234","Cool Guy Dom#dom","Dchan31#NA1"],4:["appies#spicy","Daddy#TFT","JukeYou#NA1","GForceMAX#NA1","Gangly#NA1","BunniKillYa#sleep","kchevray#2086","jubjub17#Jub"]},
+      6:{1:["garet#na1","alanxluc#1221","appies#spicy","bloody#cool","Cool Guy Dom#dom","Plorange#NULL","SZK isjerboa#TOTT","autumn#PMD"]}
+    },
+    results:{
+      "Cool Guy Dom#dom":{1:{l:2,p:2},2:{l:1,p:8},3:{l:1,p:1},4:{l:3,p:2},5:{l:3,p:2},6:{l:1,p:4}},
+      "HennyK#hngry":{1:{l:2,p:8},2:{l:1,p:1},3:{l:1,p:5}},
+      "JukeYou#NA1":{2:{l:1,p:2},3:{l:1,p:2},4:{l:2,p:2},5:{l:4,p:3}},
+      "edgevnv#NA1":{1:{l:4,p:6},2:{l:3,p:1},3:{l:1,p:7}},
+      "kchevray#2086":{1:{l:4,p:4},2:{l:3,p:6},3:{l:1,p:4},4:{l:1,p:6},5:{l:4,p:4}},
+      "Daddy#TFT":{1:{l:2,p:1},2:{l:4,p:1},3:{l:1,p:3},4:{l:3,p:5},5:{l:4,p:6}},
+      "BunniKillYa#sleep":{1:{l:2,p:3},2:{l:4,p:4},3:{l:1,p:6},4:{l:4,p:4},5:{l:4,p:8}},
+      "salad1#5955":{1:{l:1,p:4},2:{l:2,p:6},3:{l:2,p:2},4:{l:2,p:4},5:{l:3,p:1}},
+      "井底之蛙#5162":{1:{l:4,p:3},2:{l:2,p:1},3:{l:2,p:1}},
+      "Fungster#NA1":{1:{l:4,p:1},2:{l:2,p:5},3:{l:2,p:4},4:{l:4,p:1},5:{l:2,p:5}},
+      "Minoi#monky":{1:{l:4,p:5},2:{l:2,p:3},3:{l:2,p:3},4:{l:2,p:7},5:{l:2,p:7}},
+      "Pallz #NA1":{1:{l:1,p:7},2:{l:3,p:2},3:{l:2,p:7}},
+      "Klimer#HHA":{1:{l:4,p:8},2:{l:3,p:8},3:{l:2,p:5}},
+      "koto#vtu":{1:{l:2,p:5},2:{l:4,p:2},3:{l:2,p:6},4:{l:2,p:8},5:{l:1,p:6}},
+      "S3cr3t#0000":{1:{l:2,p:7},2:{l:4,p:6},3:{l:2,p:8}},
+      "Harmony#cinna":{1:{l:3,p:5},2:{l:1,p:3},3:{l:3,p:4},4:{l:3,p:1},5:{l:3,p:4}},
+      "DSFC chabo#dsfc":{1:{l:3,p:1},2:{l:1,p:5},3:{l:3,p:8}},
+      "Purpose#001":{1:{l:3,p:3},2:{l:1,p:6},3:{l:3,p:5}},
+      "duckling smasher#1234":{1:{l:1,p:6},2:{l:2,p:4},3:{l:3,p:2},4:{l:1,p:5},5:{l:3,p:8}},
+      "Morsetuney#NA1":{1:{l:1,p:8},2:{l:2,p:8},3:{l:3,p:6}},
+      "autumn#PMD":{1:{l:1,p:2},2:{l:2,p:2},3:{l:3,p:7},4:{l:1,p:1},5:{l:1,p:3},6:{l:1,p:6}},
+      "SecretSilvio#munch":{1:{l:4,p:2},2:{l:3,p:5},3:{l:3,p:1}},
+      "botumi#meow":{1:{l:3,p:6},2:{l:4,p:7},3:{l:3,p:3}},
+      "DimDanSum#DAN":{1:{l:2,p:6},2:{l:1,p:7},3:{l:4,p:3}},
+      "Juishwa#NA1":{1:{l:2,p:4},2:{l:1,p:4},3:{l:4,p:4},4:{l:3,p:6},5:{l:1,p:8}},
+      "Kaizho#NA1":{1:{l:4,p:7},2:{l:2,p:7},3:{l:4,p:7}},
+      "ralphie#doa":{1:{l:1,p:5},2:{l:3,p:4},3:{l:4,p:2}},
+      "solaggytoday#na1":{1:{l:1,p:3},2:{l:3,p:3},3:{l:4,p:5},4:{l:3,p:3},5:{l:1,p:7}},
+      "siked#uwu":{1:{l:1,p:1},2:{l:3,p:7},3:{l:4,p:8}},
+      "Leaf#0748":{1:{l:3,p:4},2:{l:4,p:5},3:{l:4,p:6}},
+      "SZK isjerboa#TOTT":{1:{l:3,p:2},2:{l:4,p:3},3:{l:4,p:1},4:{l:4,p:6},5:{l:1,p:1},6:{l:1,p:8}},
+      "garet#na1":{1:{l:7,p:1},2:{l:7,p:1},3:{l:5,p:2},4:{l:1,p:4},5:{l:1,p:2},6:{l:1,p:1}},
+      "Ramkev#NA1":{1:{l:6,p:1},2:{l:6,p:2},3:{l:6,p:1},4:{l:2,p:5},5:{l:3,p:7}},
+      "alanxluc#1221":{1:{l:8,p:1},2:{l:8,p:4},3:{l:8,p:1},4:{l:4,p:3},5:{l:2,p:6},6:{l:1,p:2}},
+      "bloody#cool":{1:{l:8,p:2},2:{l:5,p:4},3:{l:6,p:2},4:{l:1,p:2},5:{l:3,p:5},6:{l:1,p:3}},
+      "lavender#001":{1:{l:5,p:2},2:{l:8,p:3},3:{l:6,p:3},4:{l:3,p:7},5:{l:1,p:5}},
+      "appies#spicy":{1:{l:5,p:5},2:{l:5,p:2},3:{l:7,p:1},4:{l:2,p:1},5:{l:4,p:2},6:{l:1,p:7}},
+      "Bobatea#30sgr":{1:{l:6,p:3},2:{l:6,p:4},3:{l:8,p:2},4:{l:1,p:7},5:{l:2,p:4}},
+      "Plorange#NULL":{1:{l:8,p:3},2:{l:8,p:1},3:{l:7,p:6},4:{l:2,p:3},5:{l:2,p:2},6:{l:1,p:5}},
+      "35711#NA1":{1:{l:7,p:3},2:{l:7,p:4},3:{l:8,p:3},4:{l:3,p:4},5:{l:3,p:3}},
+      "Lovita#667":{1:{l:6,p:7},2:{l:6,p:1},3:{l:5,p:3},4:{l:4,p:7},5:{l:2,p:1}},
+      "Gangly#NA1":{1:{l:5,p:4},2:{l:8,p:2},3:{l:5,p:5},4:{l:4,p:5},5:{l:4,p:1}},
+      "Tomathyx#ttv":{1:{l:7,p:2},2:{l:6,p:3},3:{l:8,p:6},4:{l:1,p:3},5:{l:2,p:3}},
+      "jubjub17#Jub":{1:{l:5,p:3},2:{l:5,p:3},3:{l:5,p:6},4:{l:1,p:8},5:{l:4,p:7}},
+      "GForceMAX#NA1":{1:{l:5,p:7},2:{l:5,p:1},3:{l:6,p:4},4:{l:4,p:2},5:{l:4,p:5}},
+      "Wololo#wol0":{1:{l:6,p:2},2:{l:7,p:3},3:{l:7,p:7},4:{l:2,p:6},5:{l:1,p:4}},
+      "Pikaseul#NA1":{1:{l:7,p:4},2:{l:6,p:5},3:{l:5,p:4}},
+      "Dchan31#NA1":{1:{l:6,p:4},2:{l:7,p:6},3:{l:7,p:3},4:{l:4,p:8},5:{l:3,p:6}},
+      "pattongeo#NA1":{1:{l:8,p:7},2:{l:8,p:6},3:{l:5,p:1},4:{l:3,p:8},5:{l:2,p:8}},
+      "Shamus Day#NA1":{1:{l:7,p:5},2:{l:7,p:5},3:{l:8,p:4}},
+      "temper#1212":{1:{l:5,p:6},2:{l:8,p:5},3:{l:7,p:4}},
+      "joe#book":{1:{l:6,p:8},2:{l:7,p:2},3:{l:8,p:5}},
+      "Max Ketchum#NA1":{1:{l:8,p:5},2:{l:8,p:8},3:{l:6,p:6}},
+      "Barbarian93#BB93":{1:{l:7,p:6},2:{l:6,p:8},3:{l:7,p:5}},
+      "Bass#LAB":{1:{l:6,p:6},2:{l:7,p:7},3:{l:5,p:8}},
+      "KingCheshyre#NA1":{1:{l:8,p:6},2:{l:5,p:8},3:{l:8,p:8}}
+    }
+  },
+  { key:'emp2', name:'Empire Open #2', date:'Jun 2025',
+    lobbies:{
+      1:{1:['Xnieamo#NA1','Fungster#NA1','franchise#thee','Henree#750','Voodoo Mantis#TFT','Thereaihoneybear#na1','Grank 15 #NA1','GHOST 2'],2:['Tropical#xdd','ARA ralphie#0016','harmony#cinna','Tomathyx#ttv','Bass#LAB','Lackym#NA1','Kaizho#NA1','Lorence#TFT'],3:['Learning TFT#NA1','TurboturtleX#PMD','Gangly#NA1','Lovita#667','picklet#000','Salsashark1113#1113','Rycheco#NA1','kektaku#fate'],4:['Cool Guy Dom#dom','MGHotDog#5656','BunniKillYa#sleep','autumn#PMD','cav#5603','YarGraY#NA1','Syrsheetz77#NA1','gmario#NA1'],5:['Lucid#nalba','Maple#Arrow','KylElyK#NA1','KaiAi#PPT','bongwater123#NA1','Mi5ter878#NA111','Attractiv#NA1','MazterPK#NA1'],6:['ARA chabo#ara','RamKev#NA1','vexsama#uwu','AmbroseWinters #4466','BriarPatchy#8463','Tcap#NA1','Barbarian93#BB93','Attackoftherick#NA1']},
+      2:{1:['Xnieamo#NA1','vexsama#uwu','Grank 15 #NA1','Attackoftherick#NA1','Voodoo Mantis#TFT','BriarPatchy#8463','GHOST 2','Barbarian93#BB93'],2:['Lackym#NA1','bongwater123#NA1','ARA ralphie#0016','Mi5ter878#NA111','Lorence#TFT','Attractiv#NA1','Tomathyx#ttv','Lucid#nalba'],3:['TurboturtleX#PMD','BunniKillYa#sleep','Rycheco#NA1','Cool Guy Dom#dom','Salsashark1113#1113','MGHotDog#5656','Lovita#667','gmario#NA1'],4:['cav#5603','Gangly#NA1','autumn#PMD','Learning TFT#NA1','Syrsheetz77#NA1','kektaku#fate','YarGraY#NA1','picklet#000'],5:['KaiAi#PPT','Tropical#xdd','KylElyK#NA1','harmony#cinna','Maple#Arrow','Bass#LAB','MazterPK#NA1','Kaizho#NA1'],6:['ARA chabo#ara','franchise#thee','Tcap#NA1','Thereaihoneybear#na1','RamKev#NA1','Henree#750','AmbroseWinters #4466','Fungster#NA1']},
+      3:{1:['TurboturtleX#PMD','autumn#PMD','Rycheco#NA1','Tomathyx#ttv','Gangly#NA1','BriarPatchy#8463','RamKev#NA1'],2:['ARA chabo#ara','bongwater123#NA1','Cool Guy Dom#dom','picklet#000','Lorence#TFT','Mi5ter878#NA111','AmbroseWinters #4466'],3:['Xnieamo#NA1','franchise#thee','KylElyK#NA1','Tcap#NA1','Syrsheetz77#NA1','kektaku#fate','gmario#NA1','MazterPK#NA1'],4:['vexsama#uwu','BunniKillYa#sleep','Thereaihoneybear#na1','Grank 15 #NA1','Learning TFT#NA1','Salsashark1113#1113','GHOST 2','YarGraY#NA1'],5:['cav#5603','KaiAi#PPT','Lackym#NA1','Voodoo Mantis#TFT','Henree#750','Attractiv#NA1','Lucid#nalba','Lovita#667'],6:['Tropical#xdd','ARA ralphie#0016','Attackoftherick#NA1','Bass#LAB','Maple#Arrow','harmony#cinna','Kaizho#NA1','Fungster#NA1']},
+      4:{1:['TurboturtleX#PMD','Thereaihoneybear#na1','KaiAi#PPT','KylElyK#NA1','Lorence#TFT','Tcap#NA1','Rycheco#NA1','Learning TFT#NA1'],2:['franchise#thee','Xnieamo#NA1','autumn#PMD','ARA ralphie#0016','harmony#cinna','kektaku#fate','Attackoftherick#NA1','Syrsheetz77#NA1'],3:['ARA chabo#ara','BunniKillYa#sleep','Fungster#NA1','Voodoo Mantis#TFT','Gangly#NA1','Lackym#NA1','Attractiv#NA1','RamKev#NA1'],4:['vexsama#uwu','Tropical#xdd','cav#5603','Cool Guy Dom#dom','Bass#LAB','Grank 15 #NA1','Tomathyx#ttv','picklet#000']},
+      5:{1:['TurboturtleX#PMD','Xnieamo#NA1','BunniKillYa#sleep','Voodoo Mantis#TFT','Tomathyx#ttv','Lackym#NA1','Rycheco#NA1','Syrsheetz77#NA1'],2:['franchise#thee','Thereaihoneybear#na1','KaiAi#PPT','Gangly#NA1','Lorence#TFT','RamKev#NA1','Grank 15 #NA1','Attractiv#NA1'],3:['Tropical#xdd','autumn#PMD','ARA ralphie#0016','Bass#LAB','harmony#cinna','Learning TFT#NA1','kektaku#fate','Attackoftherick#NA1'],4:['ARA chabo#ara','vexsama#uwu','Cool Guy Dom#dom','cav#5603','Fungster#NA1','KylElyK#NA1','Tcap#NA1','picklet#000']},
+      6:{1:['TurboturtleX#PMD','Tropical#xdd','Cool Guy Dom#dom','vexsama#uwu','ARA ralphie#0016','Gangly#NA1','KaiAi#PPT','harmony#cinna'],2:['franchise#thee','Thereaihoneybear#na1','autumn#PMD','ARA chabo#ara','BunniKillYa#sleep','Xnieamo#NA1','Fungster#NA1','Voodoo Mantis#TFT']},
+      7:{1:['TurboturtleX#PMD','Cool Guy Dom#dom','Thereaihoneybear#na1','ARA chabo#ara','autumn#PMD','franchise#thee','Tropical#xdd','ARA ralphie#0016']}
+    },
+    results:{
+      "TurboturtleX#PMD":{1:{l:3,p:1},2:{l:3,p:1},3:{l:1,p:1},4:{l:1,p:1},5:{l:1,p:2},6:{l:1,p:2},7:{l:1,p:7}},
+      "ARA ralphie#0016":{1:{l:2,p:3},2:{l:2,p:1},3:{l:6,p:5},4:{l:2,p:3},5:{l:3,p:2},6:{l:1,p:3},7:{l:1,p:2}},
+      "Tropical#xdd":{1:{l:2,p:2},2:{l:5,p:1},3:{l:6,p:3},4:{l:4,p:1},5:{l:3,p:6},6:{l:1,p:4},7:{l:1,p:4}},
+      "Cool Guy Dom#dom":{1:{l:4,p:4},2:{l:3,p:3},3:{l:2,p:2},4:{l:4,p:3},5:{l:4,p:1},6:{l:1,p:1},7:{l:1,p:8}},
+      "Thereaihoneybear#na1":{1:{l:1,p:4},2:{l:6,p:3},3:{l:4,p:1},4:{l:1,p:3},5:{l:2,p:1},6:{l:2,p:2},7:{l:1,p:6}},
+      "franchise#thee":{1:{l:1,p:2},2:{l:6,p:2},3:{l:3,p:1},4:{l:2,p:1},5:{l:2,p:5},6:{l:2,p:5},7:{l:1,p:1}},
+      "autumn#PMD":{1:{l:4,p:3},2:{l:4,p:3},3:{l:1,p:2},4:{l:2,p:2},5:{l:3,p:3},6:{l:2,p:3},7:{l:1,p:3}},
+      "ARA chabo#ara":{1:{l:6,p:1},2:{l:6,p:1},3:{l:2,p:4},4:{l:3,p:3},5:{l:4,p:5},6:{l:2,p:1},7:{l:1,p:5}},
+      "KaiAi#PPT":{1:{l:5,p:1},2:{l:5,p:3},3:{l:5,p:4},4:{l:1,p:4},5:{l:2,p:7},6:{l:1,p:5}},
+      "Gangly#NA1":{1:{l:3,p:2},2:{l:4,p:7},3:{l:1,p:3},4:{l:3,p:4},5:{l:2,p:2},6:{l:1,p:6}},
+      "vexsama#uwu":{1:{l:6,p:2},2:{l:1,p:1},3:{l:4,p:3},4:{l:4,p:4},5:{l:4,p:4},6:{l:1,p:7}},
+      "harmony#cinna":{1:{l:2,p:4},2:{l:5,p:7},3:{l:6,p:1},4:{l:2,p:5},5:{l:3,p:4},6:{l:1,p:8}},
+      "Xnieamo#NA1":{1:{l:1,p:1},2:{l:1,p:2},3:{l:3,p:4},4:{l:2,p:4},5:{l:1,p:5},6:{l:2,p:6}},
+      "BunniKillYa#sleep":{1:{l:4,p:2},2:{l:3,p:2},3:{l:4,p:2},4:{l:3,p:5},5:{l:1,p:3},6:{l:2,p:8}},
+      "Voodoo Mantis#TFT":{1:{l:1,p:5},2:{l:1,p:3},3:{l:5,p:1},4:{l:3,p:7},5:{l:1,p:4},6:{l:2,p:7}},
+      "Fungster#NA1":{1:{l:1,p:8},2:{l:6,p:6},3:{l:6,p:2},4:{l:3,p:1},5:{l:4,p:2},6:{l:2,p:4}},
+      "Lorence#TFT":{1:{l:2,p:5},2:{l:2,p:4},3:{l:2,p:1},4:{l:1,p:7},5:{l:2,p:4}},
+      "Rycheco#NA1":{1:{l:3,p:3},2:{l:3,p:4},3:{l:1,p:7},4:{l:1,p:5},5:{l:1,p:8}},
+      "Syrsheetz77#NA1":{1:{l:4,p:5},2:{l:4,p:4},3:{l:3,p:7},4:{l:2,p:7},5:{l:1,p:1}},
+      "Lackym#NA1":{1:{l:2,p:1},2:{l:2,p:7},3:{l:5,p:5},4:{l:3,p:6},5:{l:1,p:7}},
+      "Tomathyx#ttv":{1:{l:2,p:7},2:{l:2,p:2},3:{l:1,p:6},4:{l:4,p:8},5:{l:1,p:6}},
+      "RamKev#NA1":{1:{l:6,p:5},2:{l:6,p:7},3:{l:1,p:4},4:{l:3,p:2},5:{l:2,p:3}},
+      "Attractiv#NA1":{1:{l:5,p:6},2:{l:2,p:5},3:{l:5,p:3},4:{l:3,p:8},5:{l:2,p:6}},
+      "Grank 15 #NA1":{1:{l:1,p:3},2:{l:1,p:5},3:{l:4,p:4},4:{l:4,p:7},5:{l:2,p:8}},
+      "Learning TFT#NA1":{1:{l:3,p:4},2:{l:4,p:6},3:{l:4,p:6},4:{l:1,p:2},5:{l:3,p:5}},
+      "kektaku#fate":{1:{l:3,p:6},2:{l:4,p:5},3:{l:3,p:2},4:{l:2,p:6},5:{l:3,p:1}},
+      "Attackoftherick#NA1":{1:{l:6,p:4},2:{l:1,p:4},3:{l:6,p:6},4:{l:2,p:8},5:{l:3,p:7}},
+      "Bass#LAB":{1:{l:2,p:6},2:{l:5,p:2},3:{l:6,p:4},4:{l:4,p:2},5:{l:3,p:8}},
+      "KylElyK#NA1":{1:{l:5,p:3},2:{l:5,p:4},3:{l:3,p:3},4:{l:1,p:8},5:{l:4,p:3}},
+      "Tcap#NA1":{1:{l:6,p:3},2:{l:6,p:5},3:{l:3,p:5},4:{l:1,p:6},5:{l:4,p:7}},
+      "picklet#000":{1:{l:3,p:8},2:{l:4,p:1},3:{l:2,p:7},4:{l:4,p:6},5:{l:4,p:6}},
+      "cav#5603":{1:{l:4,p:1},2:{l:4,p:2},3:{l:5,p:6},4:{l:4,p:5},5:{l:4,p:8}},
+      "bongwater123#NA1":{1:{l:5,p:2},2:{l:2,p:3},3:{l:2,p:3}},
+      "BriarPatchy#8463":{1:{l:6,p:6},2:{l:1,p:6},3:{l:1,p:5}},
+      "Barbarian93#BB93":{1:{l:6,p:8},2:{l:1,p:8}},
+      "Mi5ter878#NA111":{1:{l:5,p:4},2:{l:2,p:8},3:{l:2,p:6}},
+      "MGHotDog#5656":{1:{l:4,p:6},2:{l:3,p:7}},
+      "AmbroseWinters #4466":{1:{l:6,p:7},2:{l:6,p:8},3:{l:2,p:5}},
+      "gmario#NA1":{1:{l:4,p:8},2:{l:3,p:5},3:{l:3,p:8}},
+      "MazterPK#NA1":{1:{l:5,p:7},2:{l:5,p:8},3:{l:3,p:6}},
+      "GHOST 2":{1:{l:1,p:7},2:{l:1,p:7}},
+      "Salsashark1113#1113":{1:{l:3,p:5},2:{l:3,p:6},3:{l:4,p:8}},
+      "YarGraY#NA1":{1:{l:4,p:7},2:{l:4,p:8}},
+      "Lucid#nalba":{1:{l:5,p:8},2:{l:2,p:6},3:{l:5,p:7}},
+      "Lovita#667":{1:{l:3,p:7},2:{l:3,p:8},3:{l:5,p:2}},
+      "Henree#750":{1:{l:1,p:6},2:{l:6,p:4},3:{l:5,p:8}},
+      "Kaizho#NA1":{1:{l:2,p:8},2:{l:5,p:6},3:{l:6,p:7}},
+      "Maple#Arrow":{1:{l:5,p:5},2:{l:5,p:5},3:{l:6,p:8}}
+    }
+  },
+  { key:'key2', name:'Keystone Cup #2', date:'Sep 2025',
+    lobbies:{
+      1:{1:['Maple#Arrow','ImJustNewbie#9791','TurboturtleX#PMD','Sylveon#HEX','Grank 15 #NA1','Kaizho#NA1','TheCrazyPete#SCTFT','Tony#EMEA'],2:['RamKev#NA1','auggust#sctft','BunniKillYa#sleep','ForWon6ix#SCTFT','KylElyK#NA1','Syrsheetz77 #NA1','Rycheco#NA1','fitzhollo11#NA1'],3:['ara ralphie#0016','CLE#TFT','Tonality#TFT','Tomathy#tft','Henree#750','voodoo mantis#tft','Sunci#2517','AmbroseWinters #4466'],4:['alanxluc#1221','Rain101#R101','Lorence#TFT','AndrewCanSpel#NA1','Gangly#NA1','Toce#NA1','YarGraY#NA1','Andrew J Low #NA1']},
+      2:{1:['Tony#EMEA','Andrew J Low #NA1','Sylveon#HEX','Rain101#R101','Grank 15 #NA1','Gangly#NA1','TheCrazyPete#SCTFT','YarGraY#NA1'],2:['RamKev#NA1','voodoo mantis#tft','KylElyK#NA1','ara ralphie#0016','fitzhollo11#NA1','CLE#TFT','Rycheco#NA1','Sunci#2517'],3:['Tomathy#tft','BunniKillYa#sleep','Tonality#TFT','auggust#sctft','Henree#750','ForWon6ix#SCTFT','AmbroseWinters #4466','Syrsheetz77 #NA1'],4:['Toce#NA1','TurboturtleX#PMD','alanxluc#1221','Maple#Arrow','Lorence#TFT','ImJustNewbie#9791','AndrewCanSpel#NA1','Kaizho#NA1']},
+      3:{1:['BunniKillYa#sleep','CLE#TFT','ImJustNewbie#9791','Tonality#TFT','alanxluc#1221','Gangly#NA1','Rycheco#NA1','AmbroseWinters #4466'],2:['Toce#NA1','Sylveon#HEX','KylElyK#NA1','ForWon6ix#SCTFT','ara ralphie#0016','Kaizho#NA1','Grank 15 #NA1','Sunci#2517'],3:['RamKev#NA1','Rain101#R101','auggust#sctft','Tomathy#tft','Henree#750','Lorence#TFT','fitzhollo11#NA1','YarGraY#NA1'],4:['voodoo mantis#tft','Tony#EMEA','Maple#Arrow','Andrew J Low #NA1','TheCrazyPete#SCTFT','TurboturtleX#PMD','Syrsheetz77 #NA1','AndrewCanSpel#NA1']},
+      4:{1:['Rain101#R101','BunniKillYa#sleep','Tony#EMEA','alanxluc#1221','ara ralphie#0016','auggust#sctft','Tonality#TFT','Lorence#TFT'],2:['Sylveon#HEX','Maple#Arrow','ImJustNewbie#9791','voodoo mantis#tft','ForWon6ix#SCTFT','TurboturtleX#PMD','TheCrazyPete#SCTFT','Gangly#NA1'],3:['Toce#NA1','Kaizho#NA1','RamKev#NA1','Tomathy#tft','KylElyK#NA1','Henree#750','Andrew J Low #NA1','AndrewCanSpel#NA1']},
+      5:{1:['Toce#NA1','Rain101#R101','voodoo mantis#tft','auggust#sctft','ForWon6ix#SCTFT','ImJustNewbie#9791','KylElyK#NA1','Andrew J Low #NA1'],2:['Maple#Arrow','RamKev#NA1','Tomathy#tft','Henree#750','alanxluc#1221','Tonality#TFT','AndrewCanSpel#NA1','Lorence#TFT'],3:['BunniKillYa#sleep','Sylveon#HEX','TurboturtleX#PMD','ara ralphie#0016','Kaizho#NA1','Tony#EMEA','TheCrazyPete#SCTFT','Gangly#NA1']},
+      6:{1:['Maple#Arrow','Sylveon#HEX','RamKev#NA1','ForWon6ix#SCTFT','Henree#750','TurboturtleX#PMD','voodoo mantis#tft','Tony#EMEA'],2:['BunniKillYa#sleep','Toce#NA1','Rain101#R101','ara ralphie#0016','alanxluc#1221','ImJustNewbie#9791','Tomathy#tft','auggust#sctft']},
+      7:{1:['Maple#Arrow','BunniKillYa#sleep','Sylveon#HEX','ara ralphie#0016','Tomathy#tft','Toce#NA1','ForWon6ix#SCTFT','RamKev#NA1']}
+    },
+    results:{
+      "Maple#Arrow":{1:{l:1,p:4},2:{l:4,p:3},3:{l:4,p:1},4:{l:2,p:3},5:{l:2,p:1},6:{l:1,p:1},7:{l:1,p:6}},
+      "Sylveon#HEX":{1:{l:1,p:3},2:{l:1,p:2},3:{l:2,p:1},4:{l:2,p:5},5:{l:3,p:3},6:{l:1,p:5},7:{l:1,p:1}},
+      "BunniKillYa#sleep":{1:{l:2,p:2},2:{l:3,p:1},3:{l:1,p:5},4:{l:1,p:3},5:{l:3,p:1},6:{l:2,p:3},7:{l:1,p:5}},
+      "ara ralphie#0016":{1:{l:3,p:4},2:{l:2,p:5},3:{l:2,p:2},4:{l:1,p:4},5:{l:3,p:2},6:{l:2,p:2},7:{l:1,p:3}},
+      "Toce#NA1":{1:{l:4,p:1},2:{l:4,p:2},3:{l:2,p:3},4:{l:3,p:4},5:{l:1,p:3},6:{l:2,p:8},7:{l:1,p:2}},
+      "ForWon6ix#SCTFT":{1:{l:2,p:6},2:{l:3,p:2},3:{l:2,p:4},4:{l:2,p:4},5:{l:1,p:2},6:{l:1,p:3},7:{l:1,p:4}},
+      "Tomathy#tft":{1:{l:3,p:1},2:{l:3,p:7},3:{l:3,p:3},4:{l:3,p:3},5:{l:2,p:6},6:{l:2,p:1},7:{l:1,p:7}},
+      "RamKev#NA1":{1:{l:2,p:1},2:{l:2,p:3},3:{l:3,p:7},4:{l:3,p:1},5:{l:2,p:4},6:{l:1,p:6},7:{l:1,p:8}},
+      "Henree#750":{1:{l:3,p:5},2:{l:3,p:4},3:{l:3,p:4},4:{l:3,p:2},5:{l:2,p:3},6:{l:1,p:4}},
+      "alanxluc#1221":{1:{l:4,p:3},2:{l:4,p:6},3:{l:1,p:2},4:{l:1,p:5},5:{l:2,p:2},6:{l:2,p:5}},
+      "Rain101#R101":{1:{l:4,p:4},2:{l:1,p:1},3:{l:3,p:1},4:{l:1,p:7},5:{l:1,p:4},6:{l:2,p:7}},
+      "ImJustNewbie#9791":{1:{l:1,p:6},2:{l:4,p:1},3:{l:1,p:3},4:{l:2,p:8},5:{l:1,p:1},6:{l:2,p:6}},
+      "auggust#sctft":{1:{l:2,p:4},2:{l:3,p:3},3:{l:3,p:8},4:{l:1,p:1},5:{l:1,p:5},6:{l:2,p:4}},
+      "Tony#EMEA":{1:{l:1,p:1},2:{l:1,p:4},3:{l:4,p:4},4:{l:1,p:8},5:{l:3,p:7},6:{l:1,p:2}},
+      "TurboturtleX#PMD":{1:{l:1,p:2},2:{l:4,p:8},3:{l:4,p:3},4:{l:2,p:1},5:{l:3,p:5},6:{l:1,p:7}},
+      "voodoo mantis#tft":{1:{l:3,p:2},2:{l:2,p:2},3:{l:4,p:7},4:{l:2,p:2},5:{l:1,p:6},6:{l:1,p:8}},
+      "Tonality#TFT":{1:{l:3,p:3},2:{l:3,p:6},3:{l:1,p:6},4:{l:1,p:2},5:{l:2,p:8}},
+      "KylElyK#NA1":{1:{l:2,p:3},2:{l:2,p:4},3:{l:2,p:6},4:{l:3,p:6},5:{l:1,p:7}},
+      "AndrewCanSpel#NA1":{1:{l:4,p:7},2:{l:4,p:7},3:{l:4,p:2},4:{l:3,p:5},5:{l:2,p:5}},
+      "Gangly#NA1":{1:{l:4,p:6},2:{l:1,p:6},3:{l:1,p:4},4:{l:2,p:6},5:{l:3,p:4}},
+      "CLE#TFT":{1:{l:3,p:6},2:{l:2,p:1},3:{l:1,p:1}},
+      "TheCrazyPete#SCTFT":{1:{l:1,p:7},2:{l:1,p:3},3:{l:4,p:5},4:{l:2,p:7},5:{l:3,p:6}},
+      "Lorence#TFT":{1:{l:4,p:5},2:{l:4,p:5},3:{l:3,p:6},4:{l:1,p:6},5:{l:2,p:7}},
+      "Andrew J Low #NA1":{1:{l:4,p:2},2:{l:1,p:5},3:{l:4,p:8},4:{l:3,p:8},5:{l:1,p:8}},
+      "Kaizho#NA1":{1:{l:1,p:8},2:{l:4,p:4},3:{l:2,p:5},4:{l:3,p:7},5:{l:3,p:8}},
+      "YarGraY#NA1":{1:{l:4,p:8},2:{l:1,p:7},3:{l:3,p:2}},
+      "fitzhollo11#NA1":{1:{l:2,p:5},2:{l:2,p:8},3:{l:3,p:5}},
+      "Syrsheetz77 #NA1":{1:{l:2,p:8},2:{l:3,p:5},3:{l:4,p:6}},
+      "Rycheco#NA1":{1:{l:2,p:7},2:{l:2,p:6},3:{l:1,p:7}},
+      "Grank 15 #NA1":{1:{l:1,p:5},2:{l:1,p:8},3:{l:2,p:7}},
+      "AmbroseWinters #4466":{1:{l:3,p:7},2:{l:3,p:8},3:{l:1,p:8}},
+      "Sunci#2517":{1:{l:3,p:8},2:{l:2,p:7},3:{l:2,p:8}}
+    }
+  },
+  // ── Tristate Championship 5 ─────────────────────────────────────────────────
+  // H1 players use lobbies 1-4 (games 1-3), H2 players use lobbies 5-8 (games 1-3)
+  // Top 32 players use lobbies 1-4 (games 4-5) and lobby 1 only (game 6 finals),
+  { key:'gsc3', name:'Garden State Classic #3', date:'Oct 2025',
+    lobbies:{
+      1:{1:['ARA Ralphie#0016','harmony#cinna','Maple#Arrow','Gangly#NA1','ARA CALD #ARA','Sylveon#HEX','ambrosewinters#4466','Sunci#2517'],2:['autumn#PMD','Riley Ivy#6969','ARA Fungster#fungu','Thereaihoneybear#NA1','Toce#NA1','Grank 15 #NA1','JukeYou#NA1','Attractiv#NA1'],3:['Appies#Spicy','BunniKillYa#sleep','GanglyDestroyer67#TFT','alanxluc#1221','Thyst#NA1','Laenos#NA1','Kaizho#NA1','rycheco#na1']},
+      2:{1:['Maple#Arrow','BunniKillYa#sleep','Sylveon#HEX','Kaizho#NA1','harmony#cinna','Laenos#NA1','ambrosewinters#4466','Thyst#NA1'],2:['autumn#PMD','Riley Ivy#6969','ARA Fungster#fungu','Attractiv#NA1','Toce#NA1','Thereaihoneybear#NA1','JukeYou#NA1','Grank 15 #NA1'],3:['GanglyDestroyer67#TFT','ARA Ralphie#0016','Appies#Spicy','Gangly#NA1','rycheco#na1','ARA CALD #ARA','alanxluc#1221','Sunci#2517']},
+      3:{1:['autumn#PMD','ARA Fungster#fungu','BunniKillYa#sleep','Sylveon#HEX','Appies#Spicy','harmony#cinna','Thereaihoneybear#NA1','ambrosewinters#4466'],2:['Maple#Arrow','GanglyDestroyer67#TFT','Kaizho#NA1','Thyst#NA1','alanxluc#1221','Attractiv#NA1','ARA CALD #ARA','rycheco#na1'],3:['ARA Ralphie#0016','Gangly#NA1','Laenos#NA1','Toce#NA1','Riley Ivy#6969','JukeYou#NA1','Grank 15 #NA1','Sunci#2517']},
+      4:{1:['ARA Ralphie#0016','autumn#PMD','Maple#Arrow','Laenos#NA1','alanxluc#1221','ARA Fungster#fungu','Attractiv#NA1','Appies#Spicy'],2:['GanglyDestroyer67#TFT','Gangly#NA1','Thyst#NA1','BunniKillYa#sleep','harmony#cinna','Sylveon#HEX','Toce#NA1','Kaizho#NA1']},
+      5:{1:['ARA Ralphie#0016','GanglyDestroyer67#TFT','ARA Fungster#fungu','harmony#cinna','BunniKillYa#sleep','Laenos#NA1','alanxluc#1221','Attractiv#NA1'],2:['Gangly#NA1','autumn#PMD','Maple#Arrow','Thyst#NA1','Toce#NA1','Kaizho#NA1','Appies#Spicy','Sylveon#HEX']},
+      6:{1:['ARA Ralphie#0016','Gangly#NA1','BunniKillYa#sleep','Maple#Arrow','GanglyDestroyer67#TFT','Kaizho#NA1','alanxluc#1221','Attractiv#NA1'],2:['autumn#PMD','Thyst#NA1','harmony#cinna','Toce#NA1','ARA Fungster#fungu','Laenos#NA1','Appies#Spicy','Sylveon#HEX']},
+      7:{1:['ARA Ralphie#0016','Gangly#NA1','Maple#Arrow','Thyst#NA1','BunniKillYa#sleep','autumn#PMD','GanglyDestroyer67#TFT','harmony#cinna']}
+    },
+    results:{
+      "ARA Ralphie#0016":{1:{l:1,p:2},2:{l:3,p:2},3:{l:3,p:1},4:{l:1,p:2},5:{l:1,p:3},6:{l:1,p:6},7:{l:1,p:3}},
+      "Gangly#NA1":{1:{l:1,p:4},2:{l:3,p:1},3:{l:3,p:2},4:{l:2,p:4},5:{l:2,p:5},6:{l:1,p:2},7:{l:1,p:4}},
+      "harmony#cinna":{1:{l:1,p:5},2:{l:1,p:7},3:{l:1,p:1},4:{l:2,p:3},5:{l:1,p:2},6:{l:2,p:6},7:{l:1,p:1}},
+      "GanglyDestroyer67#TFT":{1:{l:3,p:1},2:{l:3,p:4},3:{l:2,p:2},4:{l:2,p:7},5:{l:1,p:6},6:{l:1,p:4},7:{l:1,p:2}},
+      "BunniKillYa#sleep":{1:{l:3,p:2},2:{l:1,p:5},3:{l:1,p:3},4:{l:2,p:6},5:{l:1,p:1},6:{l:1,p:3},7:{l:1,p:6}},
+      "Maple#Arrow":{1:{l:1,p:1},2:{l:1,p:3},3:{l:2,p:4},4:{l:1,p:7},5:{l:2,p:4},6:{l:1,p:1},7:{l:1,p:7}},
+      "autumn#PMD":{1:{l:2,p:1},2:{l:2,p:1},3:{l:1,p:6},4:{l:1,p:4},5:{l:2,p:3},6:{l:2,p:7},7:{l:1,p:5}},
+      "Thyst#NA1":{1:{l:3,p:8},2:{l:1,p:1},3:{l:2,p:1},4:{l:2,p:5},5:{l:2,p:1},6:{l:2,p:4},7:{l:1,p:8}},
+      "Laenos#NA1":{1:{l:3,p:6},2:{l:1,p:2},3:{l:3,p:4},4:{l:1,p:5},5:{l:1,p:5},6:{l:2,p:3}},
+      "Toce#NA1":{1:{l:2,p:5},2:{l:2,p:3},3:{l:3,p:6},4:{l:2,p:2},5:{l:2,p:2},6:{l:2,p:8}},
+      "ARA Fungster#fungu":{1:{l:2,p:3},2:{l:2,p:2},3:{l:1,p:8},4:{l:1,p:1},5:{l:1,p:8},6:{l:2,p:5}},
+      "alanxluc#1221":{1:{l:3,p:7},2:{l:3,p:3},3:{l:2,p:3},4:{l:1,p:6},5:{l:1,p:4},6:{l:1,p:5}},
+      "Appies#Spicy":{1:{l:3,p:3},2:{l:3,p:6},3:{l:1,p:7},4:{l:1,p:3},5:{l:2,p:8},6:{l:2,p:1}},
+      "Kaizho#NA1":{1:{l:3,p:4},2:{l:1,p:4},3:{l:2,p:8},4:{l:2,p:1},5:{l:2,p:6},6:{l:1,p:7}},
+      "Sylveon#HEX":{1:{l:1,p:3},2:{l:1,p:6},3:{l:1,p:4},4:{l:2,p:8},5:{l:2,p:7},6:{l:2,p:2}},
+      "Attractiv#NA1":{1:{l:2,p:4},2:{l:2,p:7},3:{l:2,p:6},4:{l:1,p:8},5:{l:1,p:7},6:{l:1,p:8}},
+      "JukeYou#NA1":{1:{l:2,p:7},2:{l:2,p:4},3:{l:3,p:3}},
+      "ambrosewinters#4466":{1:{l:1,p:7},2:{l:1,p:8},3:{l:1,p:2}},
+      "Thereaihoneybear#NA1":{1:{l:2,p:6},2:{l:2,p:6},3:{l:1,p:5}},
+      "Riley Ivy#6969":{1:{l:2,p:2},2:{l:2,p:8},3:{l:3,p:7}},
+      "ARA CALD #ARA":{1:{l:1,p:6},2:{l:3,p:7},3:{l:2,p:5}},
+      "Sunci#2517":{1:{l:1,p:8},2:{l:3,p:5},3:{l:3,p:5}},
+      "rycheco#na1":{1:{l:3,p:5},2:{l:3,p:8},3:{l:2,p:7}},
+      "Grank 15 #NA1":{1:{l:2,p:8},2:{l:2,p:5},3:{l:3,p:8}}
+    }
+  }
+];
+
+// ══════════════════════════════════════════════════════
+// ENGINE
+// ══════════════════════════════════════════════════════
+function resolveLobbies(lobbies) {
+  const out = {};
+  for (const [g, lobs] of Object.entries(lobbies)) {
+    out[g] = {};
+    for (const [ln, players] of Object.entries(lobs)) {
+      out[g][ln] = players.map(resolve);
+    }
+  }
+  return out;
+}
+
+function resolveResults(results) {
+  const out = {};
+  for (const [raw, games] of Object.entries(results)) {
+    const canon = resolve(raw);
+    if (!out[canon]) out[canon] = {};
+    for (const [g, d] of Object.entries(games)) {
+      out[canon][g] = d;
+    }
+  }
+  return out;
+}
+
+function buildAliasDisplay(results) {
+  const out = {};
+  for (const raw of Object.keys(results)) {
+    const canon = resolve(raw);
+    if (canon !== raw) {
+      if (!out[canon]) out[canon] = new Set();
+      out[canon].add(raw);
+    }
+  }
+  return out;
+}
+
+// Resolved tournament data
+const RESOLVED = TOURNAMENTS.map(t => ({
+  ...t,
+  rLobbies: resolveLobbies(t.lobbies),
+  rResults: resolveResults(t.results),
+}));
+
+// Build global alias display map
+const ALL_ALIASES = {};
+TOURNAMENTS.forEach(t => {
+  const m = buildAliasDisplay(t.results);
+  for (const [k, v] of Object.entries(m)) {
+    if (!ALL_ALIASES[k]) ALL_ALIASES[k] = new Set();
+    v.forEach(a => ALL_ALIASES[k].add(a));
+  }
+});
+
+function computeGlobal() {
+  const allNames = new Set();
+  RESOLVED.forEach(t => Object.keys(t.rResults).forEach(n => allNames.add(n)));
+  const globalSt = {};
+  allNames.forEach(n => { globalSt[n] = { rating: BASELINE, games: 0, history: [] }; });
+
+  function eff(n) {
+    if (!globalSt[n]) return BASELINE;
+    const c = Math.min(globalSt[n].games / CONF_THRESH, 1);
+    return c * globalSt[n].rating + (1 - c) * BASELINE;
+  }
+
+  const allLogs = [];
+
+  for (const t of RESOLVED) {
+    const gameNums = Object.keys(t.rLobbies).map(Number).sort((a,b) => a-b);
+    for (const g of gameNums) {
+      const pending = [];
+      for (const [lnStr, lPlayers] of Object.entries(t.rLobbies[g])) {
+        const ln = +lnStr;
+        const seen = new Set();
+        const active = lPlayers.filter(p => { if (seen.has(p)) return false; seen.add(p); return t.rResults[p]?.[g] && globalSt[p]; });
+        active.forEach(name => {
+          const placement = t.rResults[name][g].p;
+          const base = BASE_PTS[placement];
+          const others = active.filter(p => p !== name);
+          const lobbyAvg = others.length ? others.reduce((s, p) => s + eff(p), 0) / others.length : BASELINE;
+          const diff = eff(name) - lobbyAvg;
+          const mult = Math.max(0.65, Math.min(2.0, 1 - diff / 700));
+          const earned = Math.round(base * mult);
+          pending.push({ g, ln, tKey: t.key, tournName: t.name, name, placement, base, mult: +mult.toFixed(3), earned });
+        });
+      }
+      pending.forEach(e => { globalSt[e.name].rating += e.earned; globalSt[e.name].games += 1; globalSt[e.name].history.push(e); });
+      allLogs.push({ g, tKey: t.key, tournName: t.name, entries: pending });
+    }
+  }
+  return { globalSt, allLogs };
+}
+
+const { globalSt, allLogs } = computeGlobal();
+
+// Derive per-tournament state and logs by slicing global history.
+// Each tournament view shows: ratings as of the END of that tournament,
+// with multipliers exactly as they were computed during the global pass
+// (i.e. using each player's true running ELO at the time of each game).
+function buildTournamentView(tKey) {
+  const tournLogs = allLogs.filter(l => l.tKey === tKey);
+
+  // Reconstruct ratings as of END of this tournament, starting from each
+  // player's rating just BEFORE this tournament began.
+  // We do this by replaying global history up to (not including) this
+  // tournament, then applying only this tournament's entries.
+  const st = {};
+
+  // Step 1: find each player's rating just before this tournament
+  // by summing all global history entries with a different tKey that came
+  // before the first game of this tournament in allLogs order.
+  const firstTournLogIdx = allLogs.findIndex(l => l.tKey === tKey);
+  const preTournEntries = [];
+  for (let i = 0; i < firstTournLogIdx; i++) {
+    preTournEntries.push(...allLogs[i].entries);
+  }
+
+  // Build pre-tournament ratings
+  const preRatings = {};  // name → { rating, games }
+  preTournEntries.forEach(e => {
+    if (!preRatings[e.name]) preRatings[e.name] = { rating: BASELINE, games: 0 };
+    preRatings[e.name].rating += e.earned;
+    preRatings[e.name].games += 1;
+  });
+
+  // Step 2: collect all players who appeared in this tournament
+  const tournPlayers = new Set();
+  tournLogs.forEach(l => l.entries.forEach(e => tournPlayers.add(e.name)));
+
+  // Step 3: initialize st from pre-tournament ratings, then apply this tournament's entries
+  tournPlayers.forEach(name => {
+    const pre = preRatings[name] || { rating: BASELINE, games: 0 };
+    st[name] = { rating: pre.rating, games: pre.games, history: [] };
+  });
+
+  tournLogs.forEach(l => {
+    l.entries.forEach(e => {
+      if (!st[e.name]) st[e.name] = { rating: BASELINE, games: 0, history: [] };
+      st[e.name].rating += e.earned;
+      st[e.name].games += 1;
+      st[e.name].history.push(e);
+    });
+  });
+
+  return { st, gameLogs: tournLogs };
+}
+
+// Pre-build all tournament views
+const tournResults = {};
+RESOLVED.forEach(t => { tournResults[t.key] = buildTournamentView(t.key); });
+
+// ══════════════════════════════════════════════════════
+// UI
+// ══════════════════════════════════════════════════════
+let currentView = 'global', currentTab = 'board';
+let sortKey = 'rating', sortDir = 1;
+
+function getState() {
+  if (currentView === 'global') return globalSt;
+  return tournResults[currentView]?.st || globalSt;
+}
+function getLogs() {
+  if (currentView === 'global') return allLogs;
+  return tournResults[currentView]?.gameLogs || [];
+}
+
+function playerList(st) {
+  return Object.entries(st).map(([name, d]) => {
+    // delta = total points earned across the history entries in this view
+    const earned = d.history.reduce((s, h) => s + h.earned, 0);
+    return {
+      name, rating: Math.round(d.rating),
+      change: earned,
+      games: d.history.length,
+      conf: Math.min(d.games / CONF_THRESH, 1),
+      placements: d.history.map(h => h.placement)
+    };
+  });
+}
+
+function renderHeaderStats() {
+  // Header stats removed per design update
+}
+
+function renderStatLeaders() {
+  const MIN_GAMES = 15;
+  const players = Object.entries(globalSt)
+    .map(([name, d]) => {
+      const hist = d.history;
+      const games = hist.length;
+      if (games < MIN_GAMES) return null;
+      const placements = hist.map(h => h.placement);
+      const avg = placements.reduce((s, p) => s + p, 0) / games;
+      const top4 = placements.filter(p => p <= 4).length / games * 100;
+      return { name, games, avg, top4 };
+    })
+    .filter(Boolean);
+
+  // AVP — lower is better
+  const byAvp = [...players].sort((a, b) => a.avg - b.avg).slice(0, 10);
+  document.getElementById('avpLeaders').innerHTML = byAvp.map((p, i) => {
+    const [nm, tg] = p.name.includes('#') ? [p.name.split('#')[0], '#'+p.name.split('#')[1]] : [p.name, ''];
+    const rc = i < 3 ? `r${i+1}` : '';
+    return `<div class="stat-leader-row" data-player="${encodeURIComponent(p.name)}">
+      <span class="sl-rank ${rc}">${i+1}</span>
+      <span class="sl-name" title="${p.name}">${nm}</span>
+      <span class="sl-val ${i===0?'best':''}">${p.avg.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+
+  // Top 4% — higher is better
+  const byTop4 = [...players].sort((a, b) => b.top4 - a.top4).slice(0, 10);
+  document.getElementById('top4Leaders').innerHTML = byTop4.map((p, i) => {
+    const [nm, tg] = p.name.includes('#') ? [p.name.split('#')[0], '#'+p.name.split('#')[1]] : [p.name, ''];
+    const rc = i < 3 ? `r${i+1}` : '';
+    return `<div class="stat-leader-row" data-player="${encodeURIComponent(p.name)}">
+      <span class="sl-rank ${rc}">${i+1}</span>
+      <span class="sl-name" title="${p.name}">${nm}</span>
+      <span class="sl-val ${i===0?'best':''}">${Math.round(p.top4)}%</span>
+    </div>`;
+  }).join('');
+
+  // ── Hot / Cold — biggest ELO gainers/losers in last 10 games ────────────
+  const HOT_COLD_GAMES = 10;
+  const hotColdData = Object.entries(globalSt)
+    .map(([name, d]) => {
+      const hist = d.history;
+      if (hist.length < HOT_COLD_GAMES) return null;
+      const last10 = hist.slice(-HOT_COLD_GAMES);
+      const delta = last10.reduce((s, e) => s + e.earned, 0);
+      return { name, delta };
+    })
+    .filter(Boolean);
+
+  const byHot  = [...hotColdData].sort((a, b) => b.delta - a.delta).slice(0, 5);
+  const byCold = [...hotColdData].sort((a, b) => a.delta - b.delta).slice(0, 5);
+
+  const hotColdRow = (p, i, isHot) => {
+    const [nm, tg] = p.name.includes('#') ? [p.name.split('#')[0], '#'+p.name.split('#')[1]] : [p.name, ''];
+    const rc = i < 3 ? `r${i+1}` : '';
+    const sign = p.delta >= 0 ? '+' : '';
+    const valColor = isHot ? 'color:#16a34a' : 'color:#dc2626';
+    return `<div class="stat-leader-row" data-player="${encodeURIComponent(p.name)}">
+      <span class="sl-rank ${rc}">${i+1}</span>
+      <span class="sl-name" title="${p.name}">${nm}</span>
+      <span class="sl-val" style="${valColor}">${sign}${p.delta}</span>
+    </div>`;
+  };
+
+  document.getElementById('hotLeaders').innerHTML  = byHot.map((p, i) => hotColdRow(p, i, true)).join('');
+  document.getElementById('coldLeaders').innerHTML = byCold.map((p, i) => hotColdRow(p, i, false)).join('');
+
+  // Click to open profile from any stat leader row
+  document.querySelectorAll('.stat-leader-row[data-player]').forEach(row => {
+    row.addEventListener('click', () => {
+      const name = decodeURIComponent(row.dataset.player);
+      if (globalSt[name]) openProfile(name);
+    });
+  });
+}
+
+function sortBy(key) {
+  sortDir = sortKey === key ? sortDir * -1 : 1;
+  sortKey = key;
+  renderLeaderboard();
+}
+
+function buildSparkline(data) {
+  if (!data || data.length < 2) return '<svg class="spark-svg" width="80" height="28"></svg>';
+  const w = 80, h = 28, pad = 3;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const xs = data.map((_, i) => pad + i * (w - pad*2) / (data.length - 1));
+  const ys = data.map(v => h - pad - ((v - min) / range) * (h - pad*2));
+  const pts = xs.map((x, i) => `${x},${ys[i]}`).join(' ');
+  const last = data[data.length-1], first = data[0];
+  const color = last >= first ? '#16a34a' : '#dc2626';
+  // Fill area under line
+  const fillPts = `${xs[0]},${h} ` + pts + ` ${xs[xs.length-1]},${h}`;
+  const fillColor = last >= first ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.10)';
+  return `<svg class="spark-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polygon points="${fillPts}" fill="${fillColor}"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${xs[xs.length-1]}" cy="${ys[ys.length-1]}" r="2" fill="${color}"/>
+  </svg>`;
+}
+
+function renderLeaderboard() {
+  const st = getState();
+  let list = playerList(st);
+  const ranked = [...list].sort((a,b) => b.rating - a.rating);
+  const rankMap = {}; ranked.forEach((p,i) => rankMap[p.name] = i+1);
+  list.sort((a,b) => sortKey === 'name' ? sortDir * a.name.localeCompare(b.name) : sortDir * (b[sortKey] - a[sortKey]));
+
+  document.getElementById('leaderboardBody').innerHTML = list.map((p, i) => {
+    const rank = rankMap[p.name];
+    const rc = rank <= 3 ? `rank-${rank}` : '';
+    const badge = p.games < 10 ? `<span class="prov-badge badge-p">Provisional</span>` : '';
+    const [nm, tg] = p.name.includes('#') ? [p.name.split('#')[0], '#'+p.name.split('#')[1]] : [p.name, ''];
+
+    // Last 5 placements
+    const last5 = p.placements.slice(-5);
+    const dots = last5.map(pl => `<div class="l5dot l5d${pl}">${pl}</div>`).join('');
+
+    // Sparkline: reconstruct rating after each of last 5 games
+    const hist = st[p.name]?.history || [];
+    let run = BASELINE;
+    const allRatings = hist.map(h => { run += h.earned; return Math.round(run); });
+    // Include baseline as starting point if we have history
+    const ratingPoints = allRatings.length > 0 ? [BASELINE, ...allRatings].slice(-6) : [];
+    const spark = buildSparkline(ratingPoints);
+
+    return `<tr class="${rc}" style="animation-delay:${i*0.02}s" data-pname="${btoa(unescape(encodeURIComponent(p.name)))}">
+      <td class="rank-col"><span class="rank-num">${rank}</span></td>
+      <td><span class="player-name">${nm}</span>${badge}</td>
+      <td><span class="rating-val">${p.rating}</span></td>
+      <td><span class="games-val">${p.games}g</span></td>
+      <td><div class="last5">${dots}</div></td>
+      <td class="spark-cell">${spark}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPodium() {
+  const st = getState();
+  const top3 = playerList(st).sort((a,b) => b.rating - a.rating).slice(0, 3);
+  const medals = ['🥇','🥈','🥉'];
+  const order = [top3[1], top3[0], top3[2]];
+  const classes = ['p2','p1','p3'];
+  document.getElementById('podiumWrap').innerHTML = order.map((p, i) => {
+    if (!p) return `<div class="podium-card ${classes[i]}"><div class="podium-step"></div></div>`;
+    const globalRank = top3.indexOf(p) + 1;
+    const [nm, tg] = p.name.includes('#') ? [p.name.split('#')[0], '#'+p.name.split('#')[1]] : [p.name, ''];
+    const enc = encodeURIComponent(p.name);
+    return `<div class="podium-card ${classes[i]}" onclick="if(globalSt[decodeURIComponent('${enc}')])openProfile(decodeURIComponent('${enc}'))">
+      <div class="podium-medal">${medals[globalRank-1]}</div>
+      <div class="podium-name">${nm}</div>
+      <div class="podium-rating">${p.rating} ELO · ${p.games} games</div>
+      <div class="podium-step">${globalRank}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderGameLog() {
+  const logs = getLogs();
+  document.getElementById('gameLogContent').innerHTML = logs.map(({ g, tournName, entries }) => {
+    const byLobby = {};
+    entries.forEach(e => { if (!byLobby[e.ln]) byLobby[e.ln] = []; byLobby[e.ln].push(e); });
+    const lc = Object.keys(byLobby).length;
+    const cards = Object.entries(byLobby).sort((a,b) => +a[0]-+b[0]).map(([ln, es]) => {
+      es.sort((a,b) => a.placement - b.placement);
+      const rows = es.map(e => {
+        const ptsStr = e.earned >= 0 ? `+${e.earned}` : `${e.earned}`;
+        const ptsColor = e.earned >= 0 ? 'color:#16a34a' : 'color:#dc2626';
+        const pc = e.placement <= 3 ? `p${e.placement}` : '';
+        return `<div class="lobby-row">
+          <span class="lr-place ${pc}">${e.placement}</span>
+          <span class="lr-name" title="${e.name}">${e.name}</span>
+          <span class="lr-pts" style="${ptsColor}">${ptsStr}</span>
+          <span class="lr-mult">(${e.base>=0?'+':''}${e.base}×${e.mult.toFixed(2)})</span>
+        </div>`;
+      }).join('');
+      return `<div class="lobby-card"><div class="lobby-card-head">Lobby ${ln}</div>${rows}</div>`;
+    }).join('');
+    const pill = tournName ? `<span class="game-label-pill">${tournName}</span>` : '';
+    return `<div class="game-block">
+      <div class="game-label">Game ${g} ${pill}<span class="game-meta">${lc} ${lc>1?'lobbies':'lobby'} · ${entries.length} players</span></div>
+      <div class="lobby-grid">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectViewFromDropdown(sel) {
+  currentView = sel.value;
+  renderPodium();
+  renderLeaderboard();
+  renderGameLog();
+}
+
+function selectView(view) {
+  currentView = view;
+  const sel = document.getElementById('tournSelect');
+  if (sel) sel.value = view;
+  renderPodium();
+  renderLeaderboard();
+  renderGameLog();
+}
+
+function selectTab(tab, btn) {
+  document.querySelectorAll('.view-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+// PLAYER PROFILE MODAL
+// ══════════════════════════════════════════════════════
+function openProfile(playerName) {
+  const d = globalSt[playerName];
+  if (!d) return;
+
+  const hist = d.history; // all game entries globally
+  const totalGames = hist.length;
+  if (!totalGames) return;
+
+  // ── Basic stats ─────────────────────────────────────
+  const placements = hist.map(h => h.placement);
+  const avgPlace = (placements.reduce((s,p) => s+p, 0) / totalGames).toFixed(2);
+  const top4Count = placements.filter(p => p <= 4).length;
+  const top4Pct = Math.round(top4Count / totalGames * 100);
+  const wins = placements.filter(p => p === 1).length;
+  const winPct = Math.round(wins / totalGames * 100);
+
+  // ── Rating arc ──────────────────────────────────────
+  let runRating = BASELINE;
+  const ratingArc = [BASELINE];
+  hist.forEach(h => { runRating += h.earned; ratingArc.push(Math.round(runRating)); });
+  const peakRating = Math.max(...ratingArc);
+  const currentRating = Math.round(d.rating);
+
+  // ── Global rank ─────────────────────────────────────
+  const allRated = Object.entries(globalSt)
+    .map(([n, v]) => ({ n, r: Math.round(v.rating) }))
+    .sort((a, b) => b.r - a.r);
+  const globalRank = allRated.findIndex(x => x.n === playerName) + 1;
+
+  // ── Per-tournament breakdown ─────────────────────────
+  const byTourn = {};
+  hist.forEach(h => {
+    if (!byTourn[h.tKey]) byTourn[h.tKey] = { tKey: h.tKey, name: h.tournName, entries: [] };
+    byTourn[h.tKey].entries.push(h);
+  });
+  const tournRows = Object.values(byTourn).map(t => {
+    const ps = t.entries.map(e => e.placement);
+    const delta = t.entries.reduce((s, e) => s + e.earned, 0);
+    const avg = (ps.reduce((s,p) => s+p, 0) / ps.length).toFixed(1);
+    const best = Math.min(...ps);
+    return { ...t, ps, delta, avg, best, games: ps.length };
+  });
+
+  // ── Placement distribution ───────────────────────────
+  const dist = Array(8).fill(0);
+  placements.forEach(p => dist[p-1]++);
+  const maxDist = Math.max(...dist, 1);
+
+  // ── Stat rank badges (where does this player rank globally for each stat) ──
+  const qualified = Object.entries(globalSt)
+    .map(([n, d]) => {
+      const h = d.history;
+      const games = h.length;
+      if (games < 1) return null;
+      const ps = h.map(e => e.placement);
+      return { n, rating: Math.round(d.rating), avg: ps.reduce((s,p) => s+p,0)/games, top4: ps.filter(p=>p<=4).length/games };
+    }).filter(Boolean);
+
+  const eloRank  = qualified.sort((a,b) => b.rating - a.rating).findIndex(x => x.n === playerName) + 1;
+  const avgRank  = qualified.sort((a,b) => a.avg   - b.avg  ).findIndex(x => x.n === playerName) + 1;
+  const top4Rank = qualified.sort((a,b) => b.top4  - a.top4 ).findIndex(x => x.n === playerName) + 1;
+
+  const rankPill = (r) => r <= 3
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;background:var(--gold);color:var(--navy);padding:0.1rem 0.4rem;border-radius:2px">${r === 1 ? '1st' : r === 2 ? '2nd' : '3rd'}</span>`
+    : `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;font-weight:600;letter-spacing:0.06em;background:var(--gray-100);color:var(--gray-600);padding:0.1rem 0.4rem;border-radius:2px">#${r}</span>`;
+  const aliases = ALL_ALIASES[playerName];
+  const akaStr = aliases && aliases.size > 0
+    ? 'aka ' + [...aliases].join(', ')
+    : '';
+
+  // ── Name display ─────────────────────────────────────
+  const [nm, tg] = playerName.includes('#')
+    ? [playerName.split('#')[0], '#' + playerName.split('#')[1]]
+    : [playerName, ''];
+
+  const rankSuffix = n => ['th','st','nd','rd'][Math.min(n%10 > 3 || Math.floor(n%100/10) === 1 ? 0 : n%10, 3)];
+
+  // ── ELO chart SVG ────────────────────────────────────
+  function buildEloChart(arc) {
+    if (arc.length < 2) return '';
+    const W = 820, H = 110, PAD = 8;
+    const mn = Math.min(...arc), mx = Math.max(...arc);
+    const rng = mx - mn || 1;
+    const xs = arc.map((_, i) => PAD + i * (W - PAD*2) / (arc.length - 1));
+    const ys = arc.map(v => H - PAD - ((v - mn) / rng) * (H - PAD*2));
+    const pts = xs.map((x,i) => `${x},${ys[i]}`).join(' ');
+    const fill = `${xs[0]},${H} ${pts} ${xs[xs.length-1]},${H}`;
+    const last = arc[arc.length-1], first = arc[0];
+    const col = last >= first ? '#16a34a' : '#dc2626';
+    const fillCol = last >= first ? 'rgba(22,163,74,0.10)' : 'rgba(220,38,38,0.08)';
+    const baseY = H - PAD - ((BASELINE - mn) / rng) * (H - PAD*2);
+    const baselineEl = (mn < BASELINE && BASELINE < mx)
+      ? `<line x1="${PAD}" y1="${baseY}" x2="${W-PAD}" y2="${baseY}" stroke="#e4e7f0" stroke-width="1" stroke-dasharray="4,3"/>`
+      : '';
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:110px;display:block">
+      ${baselineEl}
+      <polygon points="${fill}" fill="${fillCol}"/>
+      <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${xs[xs.length-1]}" cy="${ys[ys.length-1]}" r="4" fill="${col}"/>
+    </svg>`;
+  }
+
+  // ── Placement distribution bars ───────────────────────
+  const distColors = ['pb1','pb2','pb3','pb4','pb5','pb6','pb7','pb8'];
+  const distBars = dist.map((count, i) => {
+    const pct = Math.round((count / maxDist) * 56);
+    return `<div class="place-bar-wrap">
+      <div class="place-bar-count">${count}</div>
+      <div class="place-bar-outer"><div class="place-bar-inner ${distColors[i]}" style="height:${pct}px"></div></div>
+      <div class="place-bar-label">${i+1}${rankSuffix(i+1)}</div>
+    </div>`;
+  }).join('');
+
+  // ── Tournament rows ───────────────────────────────────
+  const tRows = tournRows.map(t => {
+    const dSign = t.delta >= 0 ? '+' : '';
+    const dCls = t.delta >= 0 ? 'tr-delta-pos' : 'tr-delta-neg';
+    const dots = t.ps.map(p => `<div class="l5dot l5d${p}">${p}</div>`).join('');
+    return `<tr>
+      <td><span class="tr-name">${t.name}</span></td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--gray-400)">${t.games}g</td>
+      <td><span class="${dCls}">${dSign}${t.delta}</span></td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--gray-600)">${t.avg}</td>
+      <td><div class="tr-placement-dots">${dots}</div></td>
+    </tr>`;
+  }).join('');
+
+  // ── Assemble HTML ─────────────────────────────────────
+  document.getElementById('profileContent').innerHTML = `
+    <div class="profile-header">
+      <div>
+        <div class="profile-name">${nm}</div>
+        ${akaStr ? `<div class="profile-aka">${akaStr}</div>` : ''}
+      </div>
+      <div class="profile-rank-badge">
+        <div class="profile-rank-label">Global Rank</div>
+        <div class="profile-rank-num">#${globalRank}</div>
+      </div>
+    </div>
+
+    <div class="profile-stats-row">
+      <div class="profile-stat">
+        <div class="profile-stat-badge">${rankPill(eloRank)}</div>
+        <div class="profile-stat-val">${currentRating}</div>
+        <div class="profile-stat-lbl">ELO Rating</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-badge"></div>
+        <div class="profile-stat-val">${totalGames}</div>
+        <div class="profile-stat-lbl">Games Played</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-badge">${rankPill(avgRank)}</div>
+        <div class="profile-stat-val">${avgPlace}</div>
+        <div class="profile-stat-lbl">Avg Placement</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-badge">${rankPill(top4Rank)}</div>
+        <div class="profile-stat-val">${top4Pct}%</div>
+        <div class="profile-stat-lbl">Top 4 Rate</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val">${wins} <span style="font-size:1rem;color:var(--gray-400);font-weight:400">/ ${winPct}%</span></div>
+        <div class="profile-stat-lbl">Wins</div>
+      </div>
+    </div>
+
+    <div class="profile-body">
+
+      <div class="profile-section">
+        <div class="profile-section-title">
+          <span>ELO History</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:400;color:var(--gray-400)">Peak: ${peakRating}</span>
+        </div>
+        <div class="elo-chart-wrap">${buildEloChart(ratingArc)}</div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title"><span>Placement Distribution</span></div>
+        <div class="place-dist">${distBars}</div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title"><span>Tournament Results</span></div>
+        <table class="tourn-results-table">
+          <thead><tr>
+            <th>Tournament</th>
+            <th>Games</th>
+            <th>ELO ±</th>
+            <th>Avg Place</th>
+            <th>Placements</th>
+          </tr></thead>
+          <tbody>${tRows}</tbody>
+        </table>
+      </div>
+
+    </div>`;
+
+  document.getElementById('profileOverlay').classList.add('open');
+  document.getElementById('profileModal').scrollTop = 0;
+}
+
+function closeProfile() {
+  document.getElementById('profileOverlay').classList.remove('open');
+}
+
+// Open profile on leaderboard row click
+document.getElementById('leaderboardBody').addEventListener('click', e => {
+  const row = e.target.closest('tr[data-pname]');
+  if (!row) return;
+  const name = decodeURIComponent(escape(atob(row.dataset.pname)));
+  if (globalSt[name]) openProfile(name);
+});
+
+// Close on overlay click or X button
+document.getElementById('profileOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('profileOverlay')) closeProfile();
+});
+document.getElementById('profileClose').addEventListener('click', closeProfile);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProfile(); });
+
+renderHeaderStats();
+renderPodium();
+renderLeaderboard();
+renderGameLog();
+renderStatLeaders();
+</script>
+</body>
+</html>
