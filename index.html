@@ -1723,8 +1723,8 @@ function openProfile(playerName) {
     })
     .sort((a,b) => a.delta - b.delta); // best first (lowest placement = best)
 
-  const bestFriend = matchups.slice(0, 3); // place better around them
-  const kryptonite = matchups.slice(-3).reverse(); // place worse around them
+  const bestFriend = matchups.filter(m => m.delta < 0).slice(0, 3); // AVP improves (lower placement avg)
+  const kryptonite = matchups.filter(m => m.delta > 0).sort((a,b) => b.delta - a.delta).slice(0, 3); // AVP worsens (higher placement avg)
 
   const matchupRow = (m, type) => {
     const isGood = type === 'friend';
@@ -1737,17 +1737,17 @@ function openProfile(playerName) {
     </div>`;
   };
 
-  const matchupHTML = matchups.length < 2 ? '' : `
+  const matchupHTML = (bestFriend.length === 0 && kryptonite.length === 0) ? '' : `
       <div class="profile-section">
         <div class="profile-section-title"><span>Matchups</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:400;color:var(--gray-400)">min. 5 shared games</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);padding:0.4rem 0.75rem;background:var(--gray-50);border-bottom:1px solid var(--gray-100)">🤝 Best Matchup</div>
-            ${bestFriend.map(m => matchupRow(m, 'friend')).join('')}
+            ${bestFriend.length ? bestFriend.map(m => matchupRow(m, 'friend')).join('') : '<div style="padding:0.6rem 0.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--gray-400)">Not enough data</div>'}
           </div>
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);padding:0.4rem 0.75rem;background:var(--gray-50);border-bottom:1px solid var(--gray-100)">😤 Kryptonite</div>
-            ${kryptonite.map(m => matchupRow(m, 'krypto')).join('')}
+            ${kryptonite.length ? kryptonite.map(m => matchupRow(m, 'krypto')).join('') : '<div style="padding:0.6rem 0.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--gray-400)">Not enough data</div>'}
           </div>
         </div>
       </div>`;
