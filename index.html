@@ -432,6 +432,10 @@ tbody tr:hover td:nth-child(2) .player-name { color:var(--gold); }
         <div class="select-wrapper">
           <select id="tournSelect" onchange="selectViewFromDropdown(this)">
             <option value="global">◆ All Tournaments</option>
+            <option value="tc1">Tactician's Crown 1</option>
+            <option value="tc2">Tactician's Crown 2</option>
+            <option value="tc3">Tactician's Crown 3</option>
+            <option value="tc4">Tactician's Crown 4</option>
             <option value="gsc1">Garden State Classic #1</option>
             <option value="emp1">Empire Open #1</option>
             <option value="key1">Keystone Cup #1</option>
@@ -440,8 +444,12 @@ tbody tr:hover td:nth-child(2) .player-name { color:var(--gold); }
             <option value="emp2">Empire Open #2</option>
             <option value="key2">Keystone Cup #2</option>
             <option value="gsc3">Garden State Classic #3</option>
+            <option value="ti25">Tristate Invitational 2025 ✦</option>
           </select>
           <span class="select-chevron">▾</span>
+        </div>
+        <div id="noEloNote" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--gray-400);margin-top:0.5rem;letter-spacing:0.03em">
+          ✦ Invitational results are shown for historical record only and do not count toward ELO ratings.
         </div>
       </div>
 
@@ -613,6 +621,12 @@ const ALIAS_MAP = {
   "attractiv#na1":              "Attractiv#NA1",
   "Filup#NA1":                  "Filup",
   "Doofydoof53#NA2":            "DoofyDoof53#NA2",
+  "Toce":                    "Toce#NA1",
+  "Fitzhollo11 #NA1":        "fitzhollo11#NA1",
+  "Groxie#pmd":              "Groxie",
+  "Skyhawk634#1997":         "skyhawk634#LQD",
+  "kektaku#rukia":           "kektaku#fate",
+  "GB Spartan":              "RamKev #NA1",
   "salsashark1113#1113":        "Salsashark1113#1113",
 };
 
@@ -626,6 +640,212 @@ const BASE_PTS = {1:40,2:30,3:20,4:10,5:-10,6:-20,7:-30,8:-40};
 // ══════════════════════════════════════════════════════
 
 const TOURNAMENTS = [
+{ key:'tc1', name:"Tactician's Crown 1", date:'Nov 2021',
+    lobbies:{
+      1:{1:['Lab 016 Jirachy','Stress Life','gen1miss256','DD Fleming','rivulet','freshveggies','SkylarVice','PayCech'],2:['Squirtify','Elodae','jamlolver','uwudamndaniel','d0nkehh','ryansavage29','Kunaievrai','crueltiez'],3:['Homesick','charlesdc','reliabull','jersery','DimDanSum#DAN','ANamedPlayer','tae2n','b3stus3rname'],4:['dennishpark','Dumb jgler','JupiterMonky','dragans','zeldaa','librizzi','Hackcam','ttv ryanbaconn']},
+      2:{1:['Lab 016 Jirachy','Stress Life','gen1miss256','DD Fleming','rivulet','freshveggies','SkylarVice','PayCech'],2:['Squirtify','Elodae','jamlolver','uwudamndaniel','d0nkehh','ryansavage29','Kunaievrai','crueltiez'],3:['Homesick','charlesdc','reliabull','jersery','DimDanSum#DAN','ANamedPlayer','tae2n','b3stus3rname'],4:['dennishpark','Dumb jgler','JupiterMonky','dragans','zeldaa','librizzi','Hackcam','ttv ryanbaconn']},
+      3:{1:['Lab 016 Jirachy','Stress Life','gen1miss256','DD Fleming','rivulet','freshveggies','SkylarVice','PayCech'],2:['Squirtify','Elodae','jamlolver','uwudamndaniel','d0nkehh','ryansavage29','Kunaievrai','crueltiez'],3:['Homesick','charlesdc','reliabull','jersery','DimDanSum#DAN','ANamedPlayer','tae2n','b3stus3rname'],4:['dennishpark','Dumb jgler','JupiterMonky','dragans','zeldaa','librizzi','Hackcam','ttv ryanbaconn']},
+      4:{1:['freshveggies','uwudamndaniel','Homesick','dennishpark','Lab 016 Jirachy','Kunaievrai','JupiterMonky','charlesdc']},
+      5:{1:['freshveggies','uwudamndaniel','Homesick','dennishpark','Lab 016 Jirachy','Kunaievrai','JupiterMonky','charlesdc']},
+      6:{1:['freshveggies','uwudamndaniel','Homesick','dennishpark','Lab 016 Jirachy','Kunaievrai','JupiterMonky','charlesdc']}
+    },
+    results:{
+      "ANamedPlayer":{1:{l:3,p:7},2:{l:3,p:6},3:{l:3,p:7}},
+      "DD Fleming":{1:{l:1,p:5},2:{l:1,p:7},3:{l:1,p:4}},
+      "DimDanSum#DAN":{1:{l:3,p:5},2:{l:3,p:4},3:{l:3,p:7}},
+      "Dumb jgler":{1:{l:4,p:8},2:{l:4,p:7},3:{l:4,p:7}},
+      "Elodae":{1:{l:2,p:2},2:{l:2,p:7},3:{l:2,p:5}},
+      "Hackcam":{1:{l:4,p:4},2:{l:4,p:8},3:{l:4,p:1}},
+      "Homesick":{1:{l:3,p:1},2:{l:3,p:1},3:{l:3,p:4},4:{l:1,p:5},5:{l:1,p:7},6:{l:1,p:1}},
+      "JupiterMonky":{1:{l:4,p:1},2:{l:4,p:5},3:{l:4,p:3},4:{l:1,p:7},5:{l:1,p:8},6:{l:1,p:4}},
+      "Kunaievrai":{1:{l:2,p:2},2:{l:2,p:3},3:{l:2,p:3},4:{l:1,p:6},5:{l:1,p:5},6:{l:1,p:3}},
+      "Lab 016 Jirachy":{1:{l:1,p:3},2:{l:1,p:2},3:{l:1,p:2},4:{l:1,p:4},5:{l:1,p:3},6:{l:1,p:2}},
+      "PayCech":{1:{l:1,p:5},2:{l:1,p:8},3:{l:1,p:1}},
+      "SkylarVice":{1:{l:1,p:3},2:{l:1,p:5},3:{l:1,p:5}},
+      "Squirtify":{1:{l:2,p:6},2:{l:2,p:4},3:{l:2,p:2}},
+      "Stress Life":{1:{l:1,p:4},2:{l:1,p:2},3:{l:1,p:5}},
+      "b3stus3rname":{1:{l:3,p:7},2:{l:3,p:3},3:{l:3,p:8}},
+      "charlesdc":{1:{l:3,p:3},2:{l:3,p:5},3:{l:3,p:1},4:{l:1,p:2},5:{l:1,p:4},6:{l:1,p:7}},
+      "crueltiez":{1:{l:2,p:4},2:{l:2,p:8},3:{l:2,p:5}},
+      "d0nkehh":{1:{l:2,p:7},2:{l:2,p:3},3:{l:2,p:6}},
+      "dennishpark":{1:{l:4,p:2},2:{l:4,p:1},3:{l:4,p:3},4:{l:1,p:3},5:{l:1,p:1},6:{l:1,p:8}},
+      "dragans":{1:{l:4,p:6},2:{l:4,p:4},3:{l:4,p:7}},
+      "freshveggies":{1:{l:1,p:1},2:{l:1,p:1},3:{l:1,p:1},4:{l:1,p:8},5:{l:1,p:2},6:{l:1,p:6}},
+      "gen1miss256":{1:{l:1,p:7},2:{l:1,p:5},3:{l:1,p:8}},
+      "jamlolver":{1:{l:2,p:8},2:{l:2,p:6},3:{l:2,p:6}},
+      "jersery":{1:{l:3,p:5},2:{l:3,p:6},3:{l:3,p:4}},
+      "librizzi":{1:{l:4,p:3},2:{l:4,p:8},3:{l:4,p:8}},
+      "reliabull":{1:{l:3,p:4},2:{l:3,p:2},3:{l:3,p:8}},
+      "rivulet":{1:{l:1,p:8},2:{l:1,p:6},3:{l:1,p:3}},
+      "ryansavage29":{1:{l:2,p:6},2:{l:2,p:3},3:{l:2,p:6}},
+      "tae2n":{1:{l:3,p:8},2:{l:3,p:2},3:{l:3,p:2}},
+      "ttv ryanbaconn":{1:{l:4,p:6},2:{l:4,p:4},3:{l:4,p:4}},
+      "uwudamndaniel":{1:{l:2,p:1},2:{l:2,p:1},3:{l:2,p:2},4:{l:1,p:1},5:{l:1,p:6},6:{l:1,p:4}},
+      "zeldaa":{1:{l:4,p:2},2:{l:4,p:7},3:{l:4,p:6}}
+    }
+  },
+{ key:'tc2', name:"Tactician's Crown 2", date:'Jul 2022',
+    lobbies:{
+      1:{1:['hmmmmmmmmmmm','pokknight23','MatrimC','uwudamndaniel','amcrsu','pizonka','RamKev #NA1','psume'],2:['Pockygom','Wololo323','Headdonkeyy3','VOIDS1N','Never Pivot','The cunning ham','Protts'],3:['Drowned God','Budda','dannydonuts45','Appies','RustleYourJimmys','NG Poppin','SkylarVice'],4:['Lab 016 Jirachy','Techsavage','X31','rivulet','DimDanSum#DAN','Trivia','McBeeWVU']},
+      2:{1:['hmmmmmmmmmmm','pokknight23','MatrimC','uwudamndaniel','amcrsu','pizonka','RamKev #NA1','psume'],2:['Pockygom','Wololo323','Headdonkeyy3','VOIDS1N','Never Pivot','The cunning ham','Protts'],3:['Drowned God','Budda','dannydonuts45','Appies','RustleYourJimmys','NG Poppin','SkylarVice'],4:['Lab 016 Jirachy','Techsavage','X31','rivulet','DimDanSum#DAN','Trivia','McBeeWVU']},
+      3:{1:['hmmmmmmmmmmm','pokknight23','MatrimC','uwudamndaniel','amcrsu','pizonka','RamKev #NA1','psume'],2:['Pockygom','Wololo323','Headdonkeyy3','VOIDS1N','Never Pivot','The cunning ham','Protts'],3:['Drowned God','Budda','dannydonuts45','Appies','RustleYourJimmys','NG Poppin','SkylarVice'],4:['Lab 016 Jirachy','Techsavage','X31','rivulet','DimDanSum#DAN','Trivia','McBeeWVU']},
+      4:{1:['Pockygom','Appies','VOIDS1N','uwudamndaniel','pizonka','RamKev #NA1','NG Poppin','DimDanSum#DAN']},
+      5:{1:['Pockygom','Appies','VOIDS1N','uwudamndaniel','pizonka','RamKev #NA1','NG Poppin','DimDanSum#DAN']},
+      6:{1:['Pockygom','Appies','VOIDS1N','uwudamndaniel','pizonka','RamKev #NA1','NG Poppin','DimDanSum#DAN']}
+    },
+    results:{
+      "Appies":{1:{l:3,p:3},2:{l:3,p:2},3:{l:3,p:1},4:{l:1,p:8},5:{l:1,p:1},6:{l:1,p:2}},
+      "Budda":{1:{l:3,p:6},2:{l:3,p:7},3:{l:3,p:2}},
+      "DimDanSum#DAN":{1:{l:4,p:3},2:{l:4,p:2},3:{l:4,p:1},4:{l:1,p:3},5:{l:1,p:7},6:{l:1,p:8}},
+      "Drowned God":{1:{l:3,p:2},2:{l:3,p:5},3:{l:3,p:4}},
+      "Headdonkeyy3":{1:{l:2,p:5},2:{l:2,p:5},3:{l:2,p:2}},
+      "Lab 016 Jirachy":{1:{l:4,p:7},2:{l:4,p:2},3:{l:4,p:5}},
+      "MatrimC":{1:{l:1,p:6},2:{l:1,p:1},3:{l:1,p:4}},
+      "McBeeWVU":{1:{l:4,p:7},2:{l:4,p:5},3:{l:4,p:5}},
+      "NG Poppin":{1:{l:3,p:1},2:{l:3,p:6},3:{l:3,p:1},4:{l:1,p:6},5:{l:1,p:8},6:{l:1,p:7}},
+      "Never Pivot":{1:{l:2,p:2},2:{l:2,p:6},3:{l:2,p:7}},
+      "Pockygom":{1:{l:2,p:1},2:{l:2,p:2},3:{l:2,p:3},4:{l:1,p:7},5:{l:1,p:5},6:{l:1,p:5}},
+      "Protts":{1:{l:2,p:5},2:{l:2,p:8},3:{l:2,p:6}},
+      "RamKev #NA1":{1:{l:1,p:2},2:{l:1,p:1},3:{l:1,p:4},4:{l:1,p:1},5:{l:1,p:4},6:{l:1,p:6}},
+      "RustleYourJimmys":{1:{l:3,p:8},2:{l:3,p:7},3:{l:3,p:5}},
+      "SkylarVice":{1:{l:3,p:4},2:{l:3,p:5},3:{l:3,p:7}},
+      "Techsavage":{1:{l:4,p:3},2:{l:4,p:4},3:{l:4,p:4}},
+      "The cunning ham":{1:{l:2,p:6},2:{l:2,p:1},3:{l:2,p:3}},
+      "Trivia":{1:{l:4,p:8},2:{l:4,p:6},3:{l:4,p:7}},
+      "VOIDS1N":{1:{l:2,p:3},2:{l:2,p:3},3:{l:2,p:2},4:{l:1,p:2},5:{l:1,p:3},6:{l:1,p:1}},
+      "Wololo323":{1:{l:2,p:8},2:{l:2,p:4},3:{l:2,p:2}},
+      "X31":{1:{l:4,p:5},2:{l:4,p:3},3:{l:4,p:7}},
+      "amcrsu":{1:{l:1,p:5},2:{l:1,p:6},3:{l:1,p:8}},
+      "dannydonuts45":{1:{l:3,p:4},2:{l:3,p:3},3:{l:3,p:6}},
+      "hmmmmmmmmmmm":{1:{l:1,p:7},2:{l:1,p:4},3:{l:1,p:3}},
+      "pizonka":{1:{l:1,p:1},2:{l:1,p:1},3:{l:1,p:3},4:{l:1,p:5},5:{l:1,p:6},6:{l:1,p:3}},
+      "pokknight23":{1:{l:1,p:2},2:{l:1,p:7},3:{l:1,p:6}},
+      "psume":{1:{l:1,p:7},2:{l:1,p:8},3:{l:1,p:8}},
+      "rivulet":{1:{l:4,p:1},2:{l:4,p:3},3:{l:4,p:5}},
+      "uwudamndaniel":{1:{l:1,p:4},2:{l:1,p:4},3:{l:1,p:1},4:{l:1,p:4},5:{l:1,p:2},6:{l:1,p:4}}
+    }
+  },
+{ key:'tc3', name:"Tactician's Crown 3", date:'Mar 2023',
+    lobbies:{
+      1:{1:['gachagom','invectiv#pmd','Toce','elitesoldier21','Cool Guy Dom','DimDanSum#DAN','Highrule','Lotos'],2:['VOIDS1N','taehlani','im jack','Joe Bookmark','Vesera','dookyface','Fares','ItsChandlerGG'],3:['GB Spartan','Filup','RickyZigZag','dayleft','kevyzhou','Appies','DengJason','Tetravoltex#jojo'],4:['Jason Shen','papercheeze','Obbu','Wololo323','AssBlasterMaster','WHALEOFPEACE','Craz','Phi lii special'],5:['Bossoskills','poppinjung','pizonka','Stellar Minhee','inthecypher','Drowned God','koto#vtu','MegaBassMan']},
+      2:{1:['gachagom','invectiv#pmd','poppinjung','elitesoldier21','inthecypher','DimDanSum#DAN','Drowned God','MegaBassMan'],2:['taehlani','im jack','Joe Bookmark','Obbu','Wololo323','WHALEOFPEACE','dookyface','Craz'],3:['GB Spartan','Filup','RickyZigZag','dayleft','kevyzhou','Appies','DengJason','Tetravoltex#jojo'],4:['VOIDS1N','Jason Shen','papercheeze','AssBlasterMaster','Vesera','Fares','ItsChandlerGG','Phi lii special'],5:['Bossoskills','pizonka','Stellar Minhee','Toce','Cool Guy Dom','Highrule','koto#vtu','Lotos']},
+      3:{1:['invectiv#pmd','VOIDS1N','taehlani','im jack','dayleft','inthecypher','ItsChandlerGG','MegaBassMan'],2:['GB Spartan','Jason Shen','Stellar Minhee','kevyzhou','DengJason','dookyface','Craz','Lotos'],3:['Bossoskills','Filup','RickyZigZag','poppinjung','WHALEOFPEACE','Highrule','Fares','Drowned God'],4:['papercheeze','elitesoldier21','Joe Bookmark','Wololo323','Appies','Vesera','Phi lii special','koto#vtu'],5:['gachagom','pizonka','Toce','Obbu','AssBlasterMaster','Cool Guy Dom','DimDanSum#DAN','Tetravoltex#jojo']},
+      4:{1:['Filup','VOIDS1N','taehlani','pizonka','elitesoldier21','dayleft','Joe Bookmark','Wololo323'],2:['GB Spartan','invectiv#pmd','RickyZigZag','papercheeze','Stellar Minhee','Toce','AssBlasterMaster','WHALEOFPEACE'],3:['gachagom','Bossoskills','Jason Shen','poppinjung','im jack','Obbu','kevyzhou','Cool Guy Dom']},
+      5:{1:['gachagom','Bossoskills','invectiv#pmd','Filup','poppinjung','pizonka','Stellar Minhee','Toce'],2:['GB Spartan','VOIDS1N','taehlani','RickyZigZag','Jason Shen','papercheeze','im jack','elitesoldier21']},
+      6:{1:['gachagom','GB Spartan','Bossoskills','invectiv#pmd','Filup','VOIDS1N','taehlani','RickyZigZag']}
+    },
+    results:{
+      "Appies":{1:{l:3,p:5},2:{l:3,p:2},3:{l:4,p:8}},
+      "AssBlasterMaster":{1:{l:4,p:5},2:{l:4,p:3},3:{l:5,p:5},4:{l:2,p:5}},
+      "Bossoskills":{1:{l:5,p:1},2:{l:5,p:5},3:{l:3,p:1},4:{l:3,p:6},5:{l:1,p:2},6:{l:1,p:2}},
+      "Cool Guy Dom":{1:{l:1,p:6},2:{l:5,p:4},3:{l:5,p:4},4:{l:3,p:8}},
+      "Craz":{1:{l:4,p:8},2:{l:2,p:3},3:{l:2,p:6}},
+      "DengJason":{1:{l:3,p:6},2:{l:3,p:6},3:{l:2,p:3}},
+      "DimDanSum#DAN":{1:{l:1,p:7},2:{l:1,p:3},3:{l:5,p:7}},
+      "Drowned God":{1:{l:5,p:6},2:{l:1,p:6},3:{l:3,p:8}},
+      "Fares":{1:{l:2,p:8},2:{l:4,p:7},3:{l:3,p:3}},
+      "Filup":{1:{l:3,p:3},2:{l:3,p:5},3:{l:3,p:2},4:{l:1,p:3},5:{l:1,p:4},6:{l:1,p:3}},
+      "GB Spartan":{1:{l:3,p:2},2:{l:3,p:4},3:{l:2,p:1},4:{l:2,p:3},5:{l:2,p:1},6:{l:1,p:6}},
+      "Highrule":{1:{l:1,p:4},2:{l:5,p:6},3:{l:3,p:7}},
+      "ItsChandlerGG":{1:{l:2,p:4},2:{l:4,p:8},3:{l:1,p:6}},
+      "Jason Shen":{1:{l:4,p:1},2:{l:4,p:5},3:{l:2,p:4},4:{l:3,p:5},5:{l:2,p:2}},
+      "Joe Bookmark":{1:{l:2,p:1},2:{l:2,p:4},3:{l:4,p:4},4:{l:1,p:8}},
+      "Lotos":{1:{l:1,p:8},2:{l:5,p:8},3:{l:2,p:8}},
+      "MegaBassMan":{1:{l:5,p:8},2:{l:1,p:8},3:{l:1,p:8}},
+      "Obbu":{1:{l:4,p:6},2:{l:2,p:7},3:{l:5,p:1},4:{l:3,p:3}},
+      "Phi lii special":{1:{l:4,p:7},2:{l:4,p:6},3:{l:4,p:6}},
+      "RickyZigZag":{1:{l:3,p:1},2:{l:3,p:3},3:{l:3,p:6},4:{l:2,p:2},5:{l:2,p:4},6:{l:1,p:8}},
+      "Stellar Minhee":{1:{l:5,p:3},2:{l:5,p:1},3:{l:2,p:5},4:{l:2,p:7},5:{l:1,p:5}},
+      "Tetravoltex#jojo":{1:{l:3,p:7},2:{l:3,p:7},3:{l:5,p:8}},
+      "Toce":{1:{l:1,p:2},2:{l:5,p:3},3:{l:5,p:6},4:{l:2,p:4},5:{l:1,p:8}},
+      "VOIDS1N":{1:{l:2,p:2},2:{l:4,p:1},3:{l:1,p:2},4:{l:1,p:4},5:{l:2,p:7},6:{l:1,p:4}},
+      "Vesera":{1:{l:2,p:6},2:{l:4,p:4},3:{l:4,p:5}},
+      "WHALEOFPEACE":{1:{l:4,p:4},2:{l:2,p:5},3:{l:3,p:5},4:{l:2,p:8}},
+      "Wololo323":{1:{l:4,p:2},2:{l:2,p:8},3:{l:4,p:2},4:{l:1,p:6}},
+      "dayleft":{1:{l:3,p:4},2:{l:3,p:8},3:{l:1,p:3},4:{l:1,p:2}},
+      "dookyface":{1:{l:2,p:3},2:{l:2,p:6},3:{l:2,p:7}},
+      "elitesoldier21":{1:{l:1,p:3},2:{l:1,p:5},3:{l:4,p:1},4:{l:1,p:7},5:{l:2,p:8}},
+      "gachagom":{1:{l:1,p:1},2:{l:1,p:4},3:{l:5,p:2},4:{l:3,p:1},5:{l:1,p:7},6:{l:1,p:1}},
+      "im jack":{1:{l:2,p:7},2:{l:2,p:2},3:{l:1,p:1},4:{l:3,p:4},5:{l:2,p:6}},
+      "inthecypher":{1:{l:5,p:2},2:{l:1,p:7},3:{l:1,p:7}},
+      "invectiv#pmd":{1:{l:1,p:5},2:{l:1,p:1},3:{l:1,p:4},4:{l:2,p:1},5:{l:1,p:1},6:{l:1,p:7}},
+      "kevyzhou":{1:{l:3,p:8},2:{l:3,p:1},3:{l:2,p:2},4:{l:3,p:7}},
+      "koto#vtu":{1:{l:5,p:7},2:{l:5,p:7},3:{l:4,p:7}},
+      "papercheeze":{1:{l:4,p:3},2:{l:4,p:2},3:{l:4,p:3},4:{l:2,p:6},5:{l:2,p:5}},
+      "pizonka":{1:{l:5,p:5},2:{l:5,p:2},3:{l:5,p:3},4:{l:1,p:5},5:{l:1,p:3}},
+      "poppinjung":{1:{l:5,p:4},2:{l:1,p:2},3:{l:3,p:4},4:{l:3,p:2},5:{l:1,p:6}},
+      "taehlani":{1:{l:2,p:5},2:{l:2,p:1},3:{l:1,p:5},4:{l:1,p:1},5:{l:2,p:3},6:{l:1,p:5}}
+    }
+  },
+  // ── Tactician's Crown 4 ────────────────────────────────────────────────────
+  { key:'tc4', name:"Tactician's Crown 4", date:'Oct 2023',
+    lobbies:{
+      1:{1:['Tor rereplay#rere','Appies','ramenblitz#sctft','Joe Bookmark','kai','ADKarry','Jason Shen','pointmeatthesky'],2:['wasianiverson','Stellar Minhee','taehlani','moebius','pizonka','Joshqqq','bardled','koto#vtu'],3:['Dace','Cottontail','Bossoskills','ilo ilo','1609','Tutorial NPC','Lab 016 Jirachy','Boondogs Revenge'],4:['Clear','im jack','bopster','Lab 025 Bass#LAB','tonality#tft','dannydonuts45','djoe6897','Eclonee'],5:['Cambulee','RamKev #NA1','Groxie','SC ImDotBtw','LivesInBox','Misoshiru27','Toce','Drowned God'],6:['Pockygom','JukeYou#NA1','LilTop','Naturesbf','JanetBeanz','RustleYourJimmys','elijaah','DunBanieeMyAnnie'],7:['Filup','milala','Hirosax26','M0mboom','Cav#5603','DimDanSum#DAN','ARealEzLord','Phi lii special']},
+      2:{1:['ramenblitz#sctft','M0mboom','Joe Bookmark','milala','Jason Shen','Phi lii special','Tor rereplay#rere','Cav#5603'],2:['Joshqqq','JukeYou#NA1','wasianiverson','DunBanieeMyAnnie','taehlani','JanetBeanz','bardled','Naturesbf'],3:['Dace','Misoshiru27','1609','Cambulee','Tutorial NPC','Drowned God','Lab 016 Jirachy','Groxie'],4:['bopster','dannydonuts45','djoe6897','Clear','ARealEzLord','kai','DimDanSum#DAN','pointmeatthesky'],5:['LivesInBox','ilo ilo','RamKev #NA1','Bossoskills','SC ImDotBtw','Cottontail','Toce','Boondogs Revenge'],6:['LilTop','Stellar Minhee','RustleYourJimmys','koto#vtu','Pockygom','pizonka','elijaah','moebius'],7:['Filup','Appies','Hirosax26','ADKarry','Lab 025 Bass#LAB','im jack','tonality#tft','Eclonee']},
+      3:{1:['LivesInBox','Joshqqq','bopster','kai','Cottontail','Groxie','DunBanieeMyAnnie','Eclonee'],2:['Appies','taehlani','ADKarry','elijaah','djoe6897','Lab 025 Bass#LAB','Bossoskills','moebius'],3:['Dace','dannydonuts45','RamKev #NA1','bardled','RustleYourJimmys','Jason Shen','JanetBeanz','pointmeatthesky'],4:['M0mboom','JukeYou#NA1','Drowned God','Hirosax26','Pockygom','pizonka','Tutorial NPC','Naturesbf'],5:['ilo ilo','Clear','milala','Misoshiru27','Cambulee','tonality#tft','SC ImDotBtw','Phi lii special'],6:['Joe Bookmark','wasianiverson','DimDanSum#DAN','im jack','Stellar Minhee','1609','Cav#5603','ARealEzLord'],7:['LilTop','koto#vtu','ramenblitz#sctft','Filup','Tor rereplay#rere','Lab 016 Jirachy','Boondogs Revenge','Toce']},
+      4:{1:['Appies','wasianiverson','Clear','taehlani','ilo ilo','Drowned God','Jason Shen','pizonka'],2:['Joe Bookmark','M0mboom','milala','Cambulee','djoe6897','Tutorial NPC','im jack','Misoshiru27'],3:['LivesInBox','bopster','DimDanSum#DAN','Tor rereplay#rere','Filup','RamKev #NA1','Groxie','tonality#tft'],4:['Dace','LilTop','Joshqqq','elijaah','koto#vtu','ADKarry','JukeYou#NA1','Cav#5603']},
+      5:{1:['Joe Bookmark','LilTop','Dace','taehlani','Clear','djoe6897','M0mboom','Drowned God'],2:['Appies','bopster','Joshqqq','DimDanSum#DAN','milala','LivesInBox','wasianiverson','koto#vtu']},
+      6:{1:['Appies','bopster','Joe Bookmark','Clear','taehlani','LivesInBox','Dace','milala']}
+    },
+    results:{
+      "1609":{1:{l:3,p:3},2:{l:3,p:8},3:{l:6,p:4}},
+      "ADKarry":{1:{l:1,p:4},2:{l:7,p:3},3:{l:2,p:6},4:{l:4,p:6}},
+      "ARealEzLord":{1:{l:7,p:5},2:{l:4,p:8},3:{l:6,p:8}},
+      "Appies":{1:{l:1,p:2},2:{l:7,p:1},3:{l:2,p:1},4:{l:1,p:3},5:{l:2,p:2},6:{l:1,p:7}},
+      "Boondogs Revenge":{1:{l:3,p:8},2:{l:5,p:5},3:{l:7,p:2}},
+      "Bossoskills":{1:{l:3,p:4},2:{l:5,p:8},3:{l:2,p:8}},
+      "Cambulee":{1:{l:5,p:4},2:{l:3,p:5},3:{l:5,p:2},4:{l:2,p:8}},
+      "Cav#5603":{1:{l:7,p:8},2:{l:1,p:5},3:{l:6,p:7},4:{l:4,p:8}},
+      "Clear":{1:{l:4,p:4},2:{l:4,p:2},3:{l:5,p:3},4:{l:1,p:4},5:{l:1,p:1},6:{l:1,p:2}},
+      "Cottontail":{1:{l:3,p:6},2:{l:5,p:3},3:{l:1,p:8}},
+      "Dace":{1:{l:3,p:1},2:{l:3,p:2},3:{l:3,p:3},4:{l:4,p:5},5:{l:1,p:5},6:{l:1,p:5}},
+      "DimDanSum#DAN":{1:{l:7,p:7},2:{l:4,p:1},3:{l:6,p:2},4:{l:3,p:2},5:{l:2,p:7}},
+      "Drowned God":{1:{l:5,p:6},2:{l:3,p:1},3:{l:4,p:5},4:{l:1,p:2},5:{l:1,p:4}},
+      "DunBanieeMyAnnie":{1:{l:6,p:4},2:{l:2,p:8},3:{l:1,p:7}},
+      "Eclonee":{1:{l:4,p:8},2:{l:7,p:8},3:{l:1,p:6}},
+      "Filup":{1:{l:7,p:1},2:{l:7,p:7},3:{l:7,p:4},4:{l:3,p:4}},
+      "Groxie":{1:{l:5,p:8},2:{l:3,p:4},3:{l:1,p:2},4:{l:3,p:3}},
+      "Hirosax26":{1:{l:7,p:3},2:{l:7,p:5},3:{l:4,p:6}},
+      "JanetBeanz":{1:{l:6,p:6},2:{l:2,p:6},3:{l:3,p:5}},
+      "Jason Shen":{1:{l:1,p:5},2:{l:1,p:6},3:{l:3,p:2},4:{l:1,p:6}},
+      "Joe Bookmark":{1:{l:1,p:3},2:{l:1,p:1},3:{l:6,p:1},4:{l:2,p:2},5:{l:1,p:3},6:{l:1,p:4}},
+      "Joshqqq":{1:{l:2,p:1},2:{l:2,p:5},3:{l:1,p:4},4:{l:4,p:1},5:{l:2,p:8}},
+      "JukeYou#NA1":{1:{l:6,p:2},2:{l:2,p:4},3:{l:4,p:7},4:{l:4,p:3}},
+      "Lab 016 Jirachy":{1:{l:3,p:7},2:{l:3,p:3},3:{l:7,p:5}},
+      "Lab 025 Bass#LAB":{1:{l:4,p:5},2:{l:7,p:6},3:{l:2,p:4}},
+      "LilTop":{1:{l:6,p:1},2:{l:6,p:3},3:{l:7,p:3},4:{l:4,p:4},5:{l:1,p:8}},
+      "LivesInBox":{1:{l:5,p:1},2:{l:5,p:1},3:{l:1,p:3},4:{l:3,p:8},5:{l:2,p:3},6:{l:1,p:3}},
+      "M0mboom":{1:{l:7,p:2},2:{l:1,p:2},3:{l:4,p:4},4:{l:2,p:5},5:{l:1,p:6}},
+      "Misoshiru27":{1:{l:5,p:2},2:{l:3,p:6},3:{l:5,p:6},4:{l:2,p:6}},
+      "Naturesbf":{1:{l:6,p:8},2:{l:2,p:7},3:{l:4,p:8}},
+      "Phi lii special":{1:{l:7,p:6},2:{l:1,p:8},3:{l:5,p:7}},
+      "Pockygom":{1:{l:6,p:5},2:{l:6,p:4},3:{l:4,p:3}},
+      "RamKev #NA1":{1:{l:5,p:3},2:{l:5,p:4},3:{l:3,p:6},4:{l:3,p:7}},
+      "RustleYourJimmys":{1:{l:6,p:3},2:{l:6,p:6},3:{l:3,p:8}},
+      "SC ImDotBtw":{1:{l:5,p:5},2:{l:5,p:7},3:{l:5,p:5}},
+      "Stellar Minhee":{1:{l:2,p:2},2:{l:6,p:8},3:{l:6,p:6}},
+      "Toce":{1:{l:5,p:7},2:{l:5,p:6},3:{l:7,p:8}},
+      "Tor rereplay#rere":{1:{l:1,p:7},2:{l:1,p:3},3:{l:7,p:1},4:{l:3,p:5}},
+      "Tutorial NPC":{1:{l:3,p:5},2:{l:3,p:7},3:{l:4,p:1},4:{l:2,p:7}},
+      "bardled":{1:{l:2,p:7},2:{l:2,p:2},3:{l:3,p:4}},
+      "bopster":{1:{l:4,p:1},2:{l:4,p:5},3:{l:1,p:1},4:{l:3,p:1},5:{l:2,p:1},6:{l:1,p:1}},
+      "dannydonuts45":{1:{l:4,p:2},2:{l:4,p:4},3:{l:3,p:7}},
+      "djoe6897":{1:{l:4,p:3},2:{l:4,p:6},3:{l:2,p:3},4:{l:2,p:1},5:{l:1,p:7}},
+      "elijaah":{1:{l:6,p:7},2:{l:6,p:2},3:{l:2,p:2},4:{l:4,p:7}},
+      "ilo ilo":{1:{l:3,p:2},2:{l:5,p:2},3:{l:5,p:8},4:{l:1,p:7}},
+      "im jack":{1:{l:4,p:6},2:{l:7,p:2},3:{l:6,p:5},4:{l:2,p:3}},
+      "kai":{1:{l:1,p:6},2:{l:4,p:3},3:{l:1,p:5}},
+      "koto#vtu":{1:{l:2,p:4},2:{l:6,p:1},3:{l:7,p:7},4:{l:4,p:2},5:{l:2,p:5}},
+      "milala":{1:{l:7,p:4},2:{l:1,p:4},3:{l:5,p:1},4:{l:2,p:4},5:{l:2,p:4},6:{l:1,p:6}},
+      "moebius":{1:{l:2,p:8},2:{l:6,p:7},3:{l:2,p:7}},
+      "pizonka":{1:{l:2,p:6},2:{l:6,p:5},3:{l:4,p:2},4:{l:1,p:8}},
+      "pointmeatthesky":{1:{l:1,p:8},2:{l:4,p:7},3:{l:3,p:1}},
+      "ramenblitz#sctft":{1:{l:1,p:1},2:{l:1,p:7},3:{l:7,p:6}},
+      "taehlani":{1:{l:2,p:5},2:{l:2,p:1},3:{l:2,p:5},4:{l:1,p:1},5:{l:1,p:2},6:{l:1,p:8}},
+      "tonality#tft":{1:{l:4,p:7},2:{l:7,p:4},3:{l:5,p:4},4:{l:3,p:6}},
+      "wasianiverson":{1:{l:2,p:3},2:{l:2,p:3},3:{l:6,p:3},4:{l:1,p:5},5:{l:2,p:6}}
+    }
+  },
   { key:'gsc1', name:'Garden State Classic #1', date:'Oct 2024',
     lobbies:{
       1:{1:['RamKev #NA1','DimDanSum#DAN','Nekkra#5555','Cav#5603','cece#ysf','anime girl#kpop','Pallz#na1'],2:['PMD JOE BOOKMARK #PMD','freakyturk#NA2','kchevray#2086','Tomathyx','Dabba Nap#Tethi','Concrete#IVAR','FistofYang','tonality#tft'],3:['CLG HotshotGG#NA1','TL PockyGom#PMD','Cool Guy Dom','Faiz264#NA1','BunniKillYa#NA1','Prototype#aida','harmony #minji','kanav17#na1'],4:['Lab 025 Bass#LAB','Tetravoltex#jojo','Schısm#NA1','TheReaiHoneyBear #NA1','Haifuri','charismaacheck','Gangly#NA1']},
@@ -746,79 +966,79 @@ const TOURNAMENTS = [
   },
   { key:'key1', name:'Keystone Cup #1', date:'Feb 2025',
     lobbies:{
-      1:{1:['Tor rereplay#rere','jdcnawy#moc','Syrsheetz77 #NA1','bongwater123NA1','Gangly#NA1','kchevray#2086','cav#5603','fitzhollo11#NA1'],2:['Filup#NA1','harmony#cinna','Tomathyx#ttv','BunniKillYa#sleep','HarryBolsax#6969','Zerotwo#uwuwu','Morsetuney#NA1','Crippl#NA1'],3:['Frodan#FRO','Franchise#thee','ThaisonTFT#PKMN','BriarPatchy#8463','solaggytoday#na1','Post Maclone#NA1','ełle#NA1','Bubbaa#NA1'],4:['Appies#spicy','Skyhawk634#1997','CLE#TFT','ramenblitz#sctft','salsashark1113#1113','Tropical#xdd','AmznglyRandy#NA1','Hens#7424'],5:['Meet#2610','mazz#meow','kektaku#rukia','attractiv#na1','ImJustNewbie#9791','Ge1ster#0310','Doofydoof53#NA2','Kennyso#5318'],6:['joe#book','Henree#750','RamKev#NA1','Jadepelt#NA1','Woest#3711','godofconquezt#NA1','Wonder of U#690','chard#nima'],7:['DSJ#trust','Maple#Arrow','rabeam#tqa','anticrystal#Redem','KylElyK#NA1','Grank 15 #NA1','Cowsssssss# uwu','Nekkra#5555'],8:['ralphie#doa','dirtypuer#dirty','HEX Sylveon#HEX','reniart#0000','StorM#2374','Thereaihoneybear #NA1','Yayu#uwu','cece#ysf']},
-      2:{1:['Tor rereplay#rere','ralphie#doa','Gangly#NA1','Thereaihoneybear #NA1','cav#5603','cece#ysf','kchevray#2086','Yayu#uwu'],2:['Filup#NA1','anticrystal#Redem','Crippl#NA1','Nekkra#5555','Morsetuney#NA1','DSJ#trust','HarryBolsax#6969','Cowsssssss# uwu'],3:['Bubbaa#NA1','RamKev#NA1','ełle#NA1','Henree#750','Ge1ster#0310','joe#book','Tomathyx#ttv','BunniKillYa#sleep'],4:['Appies#spicy','Doofydoof53#NA2','CLE#TFT','Kennyso#5318','ramenblitz#sctft','AmznglyRandy#NA1','ImJustNewbie#9791','kektaku#rukia'],5:['Meet#2610','mazz#meow','Tropical#xdd','attractiv#na1','Ge1ster#0310','Skyhawk634#1997','salsashark1113#1113','Hens#7424'],6:['Frodan#FRO','Post Maclone#NA1','Wonder of U#690','godofconquezt#NA1','ThaisonTFT#PKMN','Franchise#thee','Woest#3711','chard#nima'],7:['rabeam#tqa','Maple#Arrow','Zerotwo#uwuwu','harmony#cinna','KylElyK#NA1','BunniKillYa#sleep','Grank 15 #NA1','Tomathyx#ttv'],8:['HEX Sylveon#HEX','bongwater123NA1','dirtypuer#dirty','jdcnawy#moc','reniart#0000','StorM#2374','fitzhollo11#NA1','Syrsheetz77 #NA1']},
-      3:{1:['Appies#spicy','Kennyso#5318','ThaisonTFT#PKMN','harmony#cinna','Gangly#NA1','BriarPatchy#8463','Franchise#thee','fitzhollo11#NA1'],2:['Tor rereplay#rere','Nekkra#5555','CLE#TFT','anticrystal#Redem','Maple#Arrow','attractiv#na1','DSJ#trust','Cowsssssss# uwu'],3:['joe#book','Thereaihoneybear #NA1','Ge1ster#0310','Morsetuney#NA1','ralphie#doa','bongwater123NA1','BunniKillYa#sleep','kchevray#2086'],4:['rabeam#tqa','RamKev#NA1','ImJustNewbie#9791','cav#5603','Jadepelt#NA1','kektaku#rukia','Hens#7424','salsashark1113#1113'],5:['HEX Sylveon#HEX','Filup#NA1','mazz#meow','BriarPatchy#8463','ralphie#doa','godofconquezt#NA1','Doofydoof53#NA2','Crippl#NA1'],6:['jdcnawy#moc','Woest#3711','Wonder of U#690','reniart#0000','Skyhawk634#1997','Post Maclone#NA1','Syrsheetz77 #NA1','Doofydoof53#NA2'],7:['DSJ#trust','rabeam#tqa','Frodan#FRO','Zerotwo#uwuwu','StorM#2374','AmznglyRandy#NA1','solaggytoday#na1','Gangly#NA1'],8:['Bubbaa#NA1','Henree#750','HarryBolsax#6969','ramenblitz#sctft','Meet#2610','dirtypuer#dirty','Grank 15 #NA1','cece#ysf']},
-      4:{1:['Appies#spicy','HEX Sylveon#HEX','Bubbaa#NA1','Filup#NA1','Gangly#NA1','ełle#NA1','KylElyK#NA1','Morsetuney#NA1'],2:['Tor rereplay#rere','rabeam#tqa','Woest#3711','mazz#meow','Crippl#NA1','Maple#Arrow','Frodan#FRO','attractiv#na1'],3:['joe#book','RamKev#NA1','ralphie#doa','dirtypuer#dirty','jdcnawy#moc','StorM#2374','Zerotwo#uwuwu','Ge1ster#0310'],4:['Tropical#xdd','Henree#750','bongwater123NA1','ramenblitz#sctft','cav#5603','Doofydoof53#NA2','Tomathyx#ttv','CLE#TFT']},
-      5:{1:['Appies#spicy','cav#5603','mazz#meow','Woest#3711','HEX Sylveon#HEX','Morsetuney#NA1','Frodan#FRO','KylElyK#NA1'],2:['joe#book','Henree#750','Gangly#NA1','Ge1ster#0310','dirtypuer#dirty','jdcnawy#moc','ełle#NA1','attractiv#na1'],3:['Tropical#xdd','rabeam#tqa','Maple#Arrow','ralphie#doa','bongwater123NA1','Woest#3711','CLE#TFT','Zerotwo#uwuwu'],4:['Tor rereplay#rere','RamKev#NA1','Filup#NA1','Bubbaa#NA1','StorM#2374','ramenblitz#sctft','Tomathyx#ttv','Doofydoof53#NA2']},
-      6:{1:['Tor rereplay#rere','Gangly#NA1','RamKev#NA1','Bubbaa#NA1','Henree#750','bongwater123NA1','Frodan#FRO','Tomathyx#ttv'],2:['Appies#spicy','rabeam#tqa','Filup#NA1','HEX Sylveon#HEX','CLE#TFT','Morsetuney#NA1','Ge1ster#0310','jdcnawy#moc'],3:['joe#book','Tropical#xdd','mazz#meow','dirtypuer#dirty','ralphie#doa','Maple#Arrow','Woest#3711','Zerotwo#uwuwu']},
+      1:{1:['Tor rereplay#rere','Gangly#NA1','jdcnawy#moc','bongwater123NA1','cav#5603','kchevray#2086','Syrsheetz77 #NA1','fitzhollo11#NA1'],2:['Morsetuney#NA1','Filup#NA1','Tomathyx#ttv','Zerotwo#uwuwu','Crippl#NA1','harmony#cinna','BunniKillYa#sleep','HarryBolsax#6969'],3:['Bubbaa#NA1','Frodan#FRO','ełle#NA1','ThaisonTFT#PKMN','BriarPatchy#8463','Franchise#thee','Post Maclone#NA1','solaggytoday#na1'],4:['Tropical#xdd','Appies#spicy','CLE#TFT','ramenblitz#sctft','AmznglyRandy#NA1','Skyhawk634#1997','Hens#7424','salsashark1113#1113'],5:['mazz#meow','Ge1ster#0310','attractiv#na1','Doofydoof53#NA2','ImJustNewbie#9791','Kennyso#5318','Meet#2610','kektaku#rukia'],6:['joe#book','RamKev#NA1','Henree#750','Woest#3711','chard#nima','godofconquezt#NA1','Wonder of U#690','Jadepelt#NA1'],7:['rabeam#tqa','Maple#Arrow','KylElyK#NA1','Nekkra#5555','anticrystal#Redem','Grank 15 #NA1','DSJ#trust','Cowsssssss# uwu'],8:['dirtypuer#dirty','ralphie#doa','HEX Sylveon#HEX','StorM#2374','Thereaihoneybear #NA1','reniart#0000','cece#ysf','Yayu#uwu']},
+      2:{1:['Tor rereplay#rere','Gangly#NA1','ralphie#doa','cav#5603','Thereaihoneybear #NA1','kchevray#2086','cece#ysf','Yayu#uwu'],2:['Morsetuney#NA1','Filup#NA1','Crippl#NA1','Nekkra#5555','HarryBolsax#6969','anticrystal#Redem','DSJ#trust','Cowsssssss# uwu'],3:['RamKev#NA1','Henree#750','Bubbaa#NA1','Woest#3711','ełle#NA1','BriarPatchy#8463','Jadepelt#NA1','solaggytoday#na1'],4:['Appies#spicy','CLE#TFT','attractiv#na1','Doofydoof53#NA2','Kennyso#5318','AmznglyRandy#NA1','Hens#7424','kektaku#rukia'],5:['Tropical#xdd','mazz#meow','Ge1ster#0310','ramenblitz#sctft','ImJustNewbie#9791','Meet#2610','Skyhawk634#1997','salsashark1113#1113'],6:['joe#book','Frodan#FRO','ThaisonTFT#PKMN','Franchise#thee','chard#nima','godofconquezt#NA1','Wonder of U#690','Post Maclone#NA1'],7:['rabeam#tqa','Maple#Arrow','Tomathyx#ttv','Zerotwo#uwuwu','KylElyK#NA1','harmony#cinna','BunniKillYa#sleep','Grank 15 #NA1'],8:['dirtypuer#dirty','HEX Sylveon#HEX','jdcnawy#moc','bongwater123NA1','StorM#2374','reniart#0000','Syrsheetz77 #NA1','fitzhollo11#NA1']},
+      3:{1:['Appies#spicy','Gangly#NA1','ThaisonTFT#PKMN','BriarPatchy#8463','Kennyso#5318','harmony#cinna','Franchise#thee','fitzhollo11#NA1'],2:['Tor rereplay#rere','CLE#TFT','Maple#Arrow','attractiv#na1','Nekkra#5555','anticrystal#Redem','DSJ#trust','Cowsssssss# uwu'],3:['joe#book','dirtypuer#dirty','Ge1ster#0310','Tomathyx#ttv','ełle#NA1','Thereaihoneybear #NA1','salsashark1113#1113','Post Maclone#NA1'],4:['RamKev#NA1','rabeam#tqa','Morsetuney#NA1','cav#5603','KylElyK#NA1','ImJustNewbie#9791','Jadepelt#NA1','kektaku#rukia'],5:['Filup#NA1','mazz#meow','ralphie#doa','HEX Sylveon#HEX','Crippl#NA1','godofconquezt#NA1','Hens#7424','Yayu#uwu'],6:['jdcnawy#moc','Woest#3711','bongwater123NA1','Doofydoof53#NA2','reniart#0000','Syrsheetz77 #NA1','Wonder of U#690','Skyhawk634#1997'],7:['Tropical#xdd','Frodan#FRO','ramenblitz#sctft','StorM#2374','BunniKillYa#sleep','chard#nima','AmznglyRandy#NA1','cece#ysf'],8:['Henree#750','Bubbaa#NA1','Zerotwo#uwuwu','kchevray#2086','HarryBolsax#6969','Meet#2610','Grank 15 #NA1','solaggytoday#na1']},
+      4:{1:['Appies#spicy','Bubbaa#NA1','Gangly#NA1','Morsetuney#NA1','Filup#NA1','HEX Sylveon#HEX','ełle#NA1','KylElyK#NA1'],2:['Tor rereplay#rere','rabeam#tqa','mazz#meow','Maple#Arrow','Frodan#FRO','Woest#3711','Crippl#NA1','attractiv#na1'],3:['joe#book','RamKev#NA1','dirtypuer#dirty','ralphie#doa','jdcnawy#moc','Ge1ster#0310','StorM#2374','Zerotwo#uwuwu'],4:['Tropical#xdd','Henree#750','CLE#TFT','bongwater123NA1','cav#5603','Tomathyx#ttv','ramenblitz#sctft','Doofydoof53#NA2']},
+      5:{1:['Appies#spicy','Morsetuney#NA1','mazz#meow','HEX Sylveon#HEX','Frodan#FRO','Woest#3711','cav#5603','KylElyK#NA1'],2:['joe#book','Henree#750','Gangly#NA1','dirtypuer#dirty','jdcnawy#moc','Ge1ster#0310','ełle#NA1','attractiv#na1'],3:['Tropical#xdd','rabeam#tqa','Bubbaa#NA1','ralphie#doa','Maple#Arrow','StorM#2374','Zerotwo#uwuwu','Crippl#NA1'],4:['Tor rereplay#rere','RamKev#NA1','Filup#NA1','CLE#TFT','bongwater123NA1','Tomathyx#ttv','ramenblitz#sctft','Doofydoof53#NA2']},
+      6:{1:['Tor rereplay#rere','RamKev#NA1','Henree#750','Bubbaa#NA1','Gangly#NA1','Frodan#FRO','bongwater123NA1','Tomathyx#ttv'],2:['Appies#spicy','rabeam#tqa','Morsetuney#NA1','Filup#NA1','CLE#TFT','HEX Sylveon#HEX','jdcnawy#moc','cav#5603'],3:['Tropical#xdd','joe#book','mazz#meow','dirtypuer#dirty','ralphie#doa','Maple#Arrow','Ge1ster#0310','Woest#3711']},
       7:{1:['Tor rereplay#rere','Tropical#xdd','Appies#spicy','joe#book','RamKev#NA1','Henree#750','rabeam#tqa','Bubbaa#NA1']}
     },
     results:{
-      "AmznglyRandy#NA1":{1:{l:4,p:5},2:{l:4,p:8},3:{l:7,p:4}},
-      "anticrystal#Redem":{1:{l:7,p:2},2:{l:2,p:7},3:{l:2,p:7}},
-      "Appies#spicy":{1:{l:4,p:1},2:{l:4,p:1},3:{l:1,p:1},4:{l:1,p:1},5:{l:1,p:5},6:{l:2,p:7},7:{l:1,p:2}},
-      "attractiv#na1":{1:{l:5,p:6},2:{l:4,p:5},3:{l:2,p:2},4:{l:2,p:7},5:{l:2,p:8}},
-      "bongwater123NA1":{1:{l:1,p:2},2:{l:8,p:5},3:{l:6,p:2},4:{l:4,p:4},5:{l:4,p:6},6:{l:1,p:8}},
-      "BriarPatchy#8463":{1:{l:3,p:5},2:{l:3,p:6},3:{l:1,p:3}},
-      "Bubbaa#NA1":{1:{l:3,p:1},2:{l:3,p:3},3:{l:8,p:4},4:{l:1,p:6},5:{l:3,p:3},6:{l:1,p:3},7:{l:1,p:8}},
-      "BunniKillYa#sleep":{1:{l:2,p:4},2:{l:7,p:4},3:{l:7,p:7}},
-      "cav#5603":{1:{l:1,p:5},2:{l:1,p:4},3:{l:4,p:2},4:{l:4,p:1},5:{l:1,p:7},6:{l:2,p:8}},
-      "cece#ysf":{1:{l:8,p:6},2:{l:1,p:8},3:{l:7,p:6}},
-      "chard#nima":{1:{l:6,p:7},2:{l:6,p:1},3:{l:7,p:8}},
-      "CLE#TFT":{1:{l:4,p:3},2:{l:4,p:4},3:{l:2,p:6},4:{l:4,p:3},5:{l:4,p:2},6:{l:2,p:3}},
-      "Cowsssssss# uwu":{1:{l:7,p:8},2:{l:2,p:8},3:{l:2,p:4}},
-      "Crippl#NA1":{1:{l:2,p:3},2:{l:2,p:5},3:{l:5,p:3},4:{l:2,p:8},5:{l:3,p:7}},
-      "dirtypuer#dirty":{1:{l:8,p:3},2:{l:8,p:6},3:{l:3,p:1},4:{l:3,p:5},5:{l:2,p:5},6:{l:3,p:1}},
-      "Doofydoof53#NA2":{1:{l:5,p:2},2:{l:4,p:2},3:{l:6,p:8},4:{l:4,p:8},5:{l:4,p:8}},
-      "DSJ#trust":{1:{l:7,p:6},2:{l:2,p:6},3:{l:2,p:8}},
-      "ełle#NA1":{1:{l:3,p:3},2:{l:3,p:8},3:{l:3,p:3},4:{l:1,p:5},5:{l:2,p:7}},
-      "Filup#NA1":{1:{l:2,p:1},2:{l:2,p:4},3:{l:5,p:5},4:{l:1,p:3},5:{l:4,p:3},6:{l:2,p:5}},
-      "fitzhollo11#NA1":{1:{l:1,p:8},2:{l:8,p:8},3:{l:1,p:8}},
-      "Franchise#thee":{1:{l:3,p:8},2:{l:6,p:4},3:{l:1,p:4}},
-      "Frodan#FRO":{1:{l:3,p:2},2:{l:6,p:8},3:{l:7,p:3},4:{l:2,p:6},5:{l:1,p:1},6:{l:1,p:4}},
-      "Gangly#NA1":{1:{l:1,p:3},2:{l:1,p:6},3:{l:1,p:2},4:{l:1,p:2},5:{l:2,p:1},6:{l:1,p:7}},
-      "Ge1ster#0310":{1:{l:5,p:1},2:{l:5,p:6},3:{l:3,p:6},4:{l:3,p:1},5:{l:2,p:2},6:{l:3,p:8}},
-      "godofconquezt#NA1":{1:{l:6,p:5},2:{l:6,p:5},3:{l:5,p:7}},
-      "Grank 15 #NA1":{1:{l:7,p:7},2:{l:7,p:7},3:{l:8,p:2}},
-      "harmony#cinna":{1:{l:2,p:6},2:{l:7,p:3},3:{l:1,p:6}},
-      "HarryBolsax#6969":{1:{l:2,p:7},2:{l:2,p:1},3:{l:8,p:7}},
-      "Henree#750":{1:{l:6,p:4},2:{l:3,p:1},3:{l:8,p:1},4:{l:4,p:5},5:{l:2,p:6},6:{l:1,p:1},7:{l:1,p:6}},
-      "Hens#7424":{1:{l:4,p:7},2:{l:4,p:6},3:{l:5,p:6}},
-      "HEX Sylveon#HEX":{1:{l:8,p:1},2:{l:8,p:2},3:{l:5,p:4},4:{l:1,p:8},5:{l:1,p:2},6:{l:2,p:6}},
-      "ImJustNewbie#9791":{1:{l:5,p:3},2:{l:5,p:5},3:{l:4,p:5}},
-      "Jadepelt#NA1":{1:{l:6,p:8},2:{l:3,p:5},3:{l:4,p:8}},
-      "jdcnawy#moc":{1:{l:1,p:4},2:{l:8,p:1},3:{l:6,p:6},4:{l:3,p:6},5:{l:2,p:4},6:{l:2,p:2}},
-      "joe#book":{1:{l:6,p:1},2:{l:6,p:2},3:{l:3,p:2},4:{l:3,p:2},5:{l:2,p:3},6:{l:3,p:7},7:{l:1,p:3}},
-      "kchevray#2086":{1:{l:1,p:7},2:{l:1,p:1},3:{l:8,p:6}},
-      "kektaku#rukia":{1:{l:5,p:8},2:{l:4,p:7},3:{l:4,p:7}},
-      "Kennyso#5318":{1:{l:5,p:4},2:{l:4,p:3},3:{l:1,p:7}},
-      "KylElyK#NA1":{1:{l:7,p:5},2:{l:7,p:5},3:{l:4,p:3},4:{l:1,p:7},5:{l:1,p:8}},
-      "Maple#Arrow":{1:{l:7,p:3},2:{l:7,p:6},3:{l:2,p:3},4:{l:2,p:1},5:{l:3,p:6},6:{l:3,p:4}},
-      "mazz#meow":{1:{l:5,p:5},2:{l:5,p:4},3:{l:5,p:1},4:{l:2,p:2},5:{l:1,p:4},6:{l:3,p:5}},
-      "Meet#2610":{1:{l:5,p:7},2:{l:5,p:3},3:{l:8,p:5}},
-      "Morsetuney#NA1":{1:{l:2,p:5},2:{l:2,p:2},3:{l:4,p:6},4:{l:1,p:4},5:{l:1,p:3},6:{l:2,p:1}},
-      "Nekkra#5555":{1:{l:7,p:4},2:{l:2,p:3},3:{l:2,p:5}},
-      "Post Maclone#NA1":{1:{l:3,p:6},2:{l:6,p:6},3:{l:3,p:8}},
-      "rabeam#tqa":{1:{l:7,p:1},2:{l:7,p:2},3:{l:4,p:4},4:{l:2,p:3},5:{l:3,p:4},6:{l:2,p:4},7:{l:1,p:7}},
-      "ralphie#doa":{1:{l:8,p:2},2:{l:1,p:5},3:{l:5,p:2},4:{l:3,p:8},5:{l:3,p:1},6:{l:3,p:3}},
-      "ramenblitz#sctft":{1:{l:4,p:2},2:{l:5,p:2},3:{l:7,p:5},4:{l:4,p:7},5:{l:4,p:7}},
-      "RamKev#NA1":{1:{l:6,p:2},2:{l:3,p:4},3:{l:4,p:1},4:{l:3,p:3},5:{l:4,p:5},6:{l:1,p:2},7:{l:1,p:5}},
-      "reniart#0000":{1:{l:8,p:5},2:{l:8,p:4},3:{l:6,p:5}},
-      "salsashark1113#1113":{1:{l:4,p:8},2:{l:5,p:7},3:{l:3,p:5}},
-      "Skyhawk634#1997":{1:{l:4,p:6},2:{l:5,p:8},3:{l:6,p:4}},
-      "solaggytoday#na1":{1:{l:3,p:7},2:{l:3,p:7},3:{l:8,p:8}},
-      "StorM#2374":{1:{l:8,p:7},2:{l:8,p:3},3:{l:7,p:2},4:{l:3,p:4},5:{l:3,p:8}},
-      "Syrsheetz77 #NA1":{1:{l:1,p:6},2:{l:8,p:7},3:{l:6,p:3}},
-      "ThaisonTFT#PKMN":{1:{l:3,p:4},2:{l:6,p:3},3:{l:1,p:5}},
-      "Thereaihoneybear #NA1":{1:{l:8,p:4},2:{l:1,p:3},3:{l:3,p:7}},
-      "Tomathyx#ttv":{1:{l:2,p:8},2:{l:7,p:1},3:{l:3,p:4},4:{l:4,p:6},5:{l:4,p:4},6:{l:1,p:6}},
       "Tor rereplay#rere":{1:{l:1,p:1},2:{l:1,p:2},3:{l:2,p:1},4:{l:2,p:4},5:{l:4,p:1},6:{l:1,p:5},7:{l:1,p:1}},
       "Tropical#xdd":{1:{l:4,p:4},2:{l:5,p:1},3:{l:7,p:1},4:{l:4,p:2},5:{l:3,p:2},6:{l:3,p:2},7:{l:1,p:4}},
+      "Appies#spicy":{1:{l:4,p:1},2:{l:4,p:1},3:{l:1,p:1},4:{l:1,p:1},5:{l:1,p:5},6:{l:2,p:7},7:{l:1,p:2}},
+      "joe#book":{1:{l:6,p:1},2:{l:6,p:2},3:{l:3,p:2},4:{l:3,p:2},5:{l:2,p:3},6:{l:3,p:7},7:{l:1,p:3}},
+      "RamKev#NA1":{1:{l:6,p:2},2:{l:3,p:4},3:{l:4,p:1},4:{l:3,p:3},5:{l:4,p:5},6:{l:1,p:2},7:{l:1,p:5}},
+      "Henree#750":{1:{l:6,p:4},2:{l:3,p:1},3:{l:8,p:1},4:{l:4,p:5},5:{l:2,p:6},6:{l:1,p:1},7:{l:1,p:6}},
+      "rabeam#tqa":{1:{l:7,p:1},2:{l:7,p:2},3:{l:4,p:4},4:{l:2,p:3},5:{l:3,p:4},6:{l:2,p:4},7:{l:1,p:7}},
+      "Bubbaa#NA1":{1:{l:3,p:1},2:{l:3,p:3},3:{l:8,p:4},4:{l:1,p:6},5:{l:3,p:3},6:{l:1,p:3},7:{l:1,p:8}},
+      "Gangly#NA1":{1:{l:1,p:3},2:{l:1,p:6},3:{l:1,p:2},4:{l:1,p:2},5:{l:2,p:1},6:{l:1,p:7}},
+      "Morsetuney#NA1":{1:{l:2,p:5},2:{l:2,p:2},3:{l:4,p:6},4:{l:1,p:4},5:{l:1,p:3},6:{l:2,p:1}},
+      "Filup#NA1":{1:{l:2,p:1},2:{l:2,p:4},3:{l:5,p:5},4:{l:1,p:3},5:{l:4,p:3},6:{l:2,p:5}},
+      "CLE#TFT":{1:{l:4,p:3},2:{l:4,p:4},3:{l:2,p:6},4:{l:4,p:3},5:{l:4,p:2},6:{l:2,p:3}},
+      "mazz#meow":{1:{l:5,p:5},2:{l:5,p:4},3:{l:5,p:1},4:{l:2,p:2},5:{l:1,p:4},6:{l:3,p:5}},
+      "dirtypuer#dirty":{1:{l:8,p:3},2:{l:8,p:6},3:{l:3,p:1},4:{l:3,p:5},5:{l:2,p:5},6:{l:3,p:1}},
+      "ralphie#doa":{1:{l:8,p:2},2:{l:1,p:5},3:{l:5,p:2},4:{l:3,p:8},5:{l:3,p:1},6:{l:3,p:3}},
+      "HEX Sylveon#HEX":{1:{l:8,p:1},2:{l:8,p:2},3:{l:5,p:4},4:{l:1,p:8},5:{l:1,p:2},6:{l:2,p:6}},
+      "jdcnawy#moc":{1:{l:1,p:4},2:{l:8,p:1},3:{l:6,p:6},4:{l:3,p:6},5:{l:2,p:4},6:{l:2,p:2}},
+      "Maple#Arrow":{1:{l:7,p:3},2:{l:7,p:6},3:{l:2,p:3},4:{l:2,p:1},5:{l:3,p:6},6:{l:3,p:4}},
+      "Frodan#FRO":{1:{l:3,p:2},2:{l:6,p:8},3:{l:7,p:3},4:{l:2,p:6},5:{l:1,p:1},6:{l:1,p:4}},
+      "Ge1ster#0310":{1:{l:5,p:1},2:{l:5,p:6},3:{l:3,p:6},4:{l:3,p:1},5:{l:2,p:2},6:{l:3,p:8}},
       "Woest#3711":{1:{l:6,p:6},2:{l:3,p:2},3:{l:6,p:1},4:{l:2,p:5},5:{l:1,p:6},6:{l:3,p:6}},
+      "bongwater123NA1":{1:{l:1,p:2},2:{l:8,p:5},3:{l:6,p:2},4:{l:4,p:4},5:{l:4,p:6},6:{l:1,p:8}},
+      "cav#5603":{1:{l:1,p:5},2:{l:1,p:4},3:{l:4,p:2},4:{l:4,p:1},5:{l:1,p:7},6:{l:2,p:8}},
+      "Tomathyx#ttv":{1:{l:2,p:8},2:{l:7,p:1},3:{l:3,p:4},4:{l:4,p:6},5:{l:4,p:4},6:{l:1,p:6}},
+      "ramenblitz#sctft":{1:{l:4,p:2},2:{l:5,p:2},3:{l:7,p:5},4:{l:4,p:7},5:{l:4,p:7}},
+      "StorM#2374":{1:{l:8,p:7},2:{l:8,p:3},3:{l:7,p:2},4:{l:3,p:4},5:{l:3,p:8}},
+      "Zerotwo#uwuwu":{1:{l:2,p:2},2:{l:7,p:8},3:{l:8,p:3},4:{l:3,p:7},5:{l:3,p:5}},
+      "ełle#NA1":{1:{l:3,p:3},2:{l:3,p:8},3:{l:3,p:3},4:{l:1,p:5},5:{l:2,p:7}},
+      "Crippl#NA1":{1:{l:2,p:3},2:{l:2,p:5},3:{l:5,p:3},4:{l:2,p:8},5:{l:3,p:7}},
+      "KylElyK#NA1":{1:{l:7,p:5},2:{l:7,p:5},3:{l:4,p:3},4:{l:1,p:7},5:{l:1,p:8}},
+      "attractiv#na1":{1:{l:5,p:6},2:{l:4,p:5},3:{l:2,p:2},4:{l:2,p:7},5:{l:2,p:8}},
+      "Doofydoof53#NA2":{1:{l:5,p:2},2:{l:4,p:2},3:{l:6,p:8},4:{l:4,p:8},5:{l:4,p:8}},
+      "ThaisonTFT#PKMN":{1:{l:3,p:4},2:{l:6,p:3},3:{l:1,p:5}},
+      "Nekkra#5555":{1:{l:7,p:4},2:{l:2,p:3},3:{l:2,p:5}},
+      "ImJustNewbie#9791":{1:{l:5,p:3},2:{l:5,p:5},3:{l:4,p:5}},
+      "BriarPatchy#8463":{1:{l:3,p:5},2:{l:3,p:6},3:{l:1,p:3}},
+      "Kennyso#5318":{1:{l:5,p:4},2:{l:4,p:3},3:{l:1,p:7}},
+      "Thereaihoneybear #NA1":{1:{l:8,p:4},2:{l:1,p:3},3:{l:3,p:7}},
+      "reniart#0000":{1:{l:8,p:5},2:{l:8,p:4},3:{l:6,p:5}},
+      "kchevray#2086":{1:{l:1,p:7},2:{l:1,p:1},3:{l:8,p:6}},
+      "harmony#cinna":{1:{l:2,p:6},2:{l:7,p:3},3:{l:1,p:6}},
+      "BunniKillYa#sleep":{1:{l:2,p:4},2:{l:7,p:4},3:{l:7,p:7}},
+      "HarryBolsax#6969":{1:{l:2,p:7},2:{l:2,p:1},3:{l:8,p:7}},
+      "Meet#2610":{1:{l:5,p:7},2:{l:5,p:3},3:{l:8,p:5}},
+      "Franchise#thee":{1:{l:3,p:8},2:{l:6,p:4},3:{l:1,p:4}},
+      "anticrystal#Redem":{1:{l:7,p:2},2:{l:2,p:7},3:{l:2,p:7}},
+      "Syrsheetz77 #NA1":{1:{l:1,p:6},2:{l:8,p:7},3:{l:6,p:3}},
+      "chard#nima":{1:{l:6,p:7},2:{l:6,p:1},3:{l:7,p:8}},
+      "Grank 15 #NA1":{1:{l:7,p:7},2:{l:7,p:7},3:{l:8,p:2}},
+      "godofconquezt#NA1":{1:{l:6,p:5},2:{l:6,p:5},3:{l:5,p:7}},
       "Wonder of U#690":{1:{l:6,p:3},2:{l:6,p:7},3:{l:6,p:7}},
+      "AmznglyRandy#NA1":{1:{l:4,p:5},2:{l:4,p:8},3:{l:7,p:4}},
+      "Skyhawk634#1997":{1:{l:4,p:6},2:{l:5,p:8},3:{l:6,p:4}},
+      "Hens#7424":{1:{l:4,p:7},2:{l:4,p:6},3:{l:5,p:6}},
+      "DSJ#trust":{1:{l:7,p:6},2:{l:2,p:6},3:{l:2,p:8}},
+      "Cowsssssss# uwu":{1:{l:7,p:8},2:{l:2,p:8},3:{l:2,p:4}},
+      "salsashark1113#1113":{1:{l:4,p:8},2:{l:5,p:7},3:{l:3,p:5}},
+      "Post Maclone#NA1":{1:{l:3,p:6},2:{l:6,p:6},3:{l:3,p:8}},
+      "cece#ysf":{1:{l:8,p:6},2:{l:1,p:8},3:{l:7,p:6}},
+      "Jadepelt#NA1":{1:{l:6,p:8},2:{l:3,p:5},3:{l:4,p:8}},
+      "kektaku#rukia":{1:{l:5,p:8},2:{l:4,p:7},3:{l:4,p:7}},
+      "solaggytoday#na1":{1:{l:3,p:7},2:{l:3,p:7},3:{l:8,p:8}},
       "Yayu#uwu":{1:{l:8,p:8},2:{l:1,p:7},3:{l:5,p:8}},
-      "Zerotwo#uwuwu":{1:{l:2,p:2},2:{l:7,p:8},3:{l:8,p:3},4:{l:3,p:7},5:{l:3,p:5}}
+      "fitzhollo11#NA1":{1:{l:1,p:8},2:{l:8,p:8},3:{l:1,p:8}}
     }
   },
   { key:'gsc2', name:'Garden State Classic #2', date:'Apr 2025',
@@ -1088,6 +1308,41 @@ const TOURNAMENTS = [
       "Grank 15 #NA1":{1:{l:2,p:8},2:{l:2,p:5},3:{l:3,p:8}}
     }
   }
+,
+  // ── Tristate Invitational 2025 ─────────────────────────────────────────────
+  { key:'ti25', name:'Tristate Invitational 2025', date:'Jan 2026', noElo:true,
+    lobbies:{
+      1:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','harmony#cinna','DSFC chabo#dsfc','alanxluc#1221','Cool Guy Dom'],'2':['Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee','BunniKillYa#NA1','RamKev #NA1','bloody#cool','Gangly#NA1']},
+      2:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','harmony#cinna','DSFC chabo#dsfc','alanxluc#1221','Cool Guy Dom'],'2':['Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee','BunniKillYa#NA1','RamKev #NA1','bloody#cool','Gangly#NA1']},
+      3:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','harmony#cinna','DSFC chabo#dsfc','alanxluc#1221','Cool Guy Dom'],'2':['Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee','BunniKillYa#NA1','RamKev #NA1','bloody#cool','Gangly#NA1']},
+      4:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','harmony#cinna','DSFC chabo#dsfc','alanxluc#1221','Cool Guy Dom'],'2':['Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee','BunniKillYa#NA1','RamKev #NA1','bloody#cool','Gangly#NA1']},
+      5:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','harmony#cinna','DSFC chabo#dsfc','alanxluc#1221','Cool Guy Dom'],'2':['Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee','BunniKillYa#NA1','RamKev #NA1','bloody#cool','Gangly#NA1']},
+      6:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee']},
+      7:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee']},
+      8:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee']},
+      9:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee']},
+      10:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee']},
+      11:{'1':['Appies','Joe Bookmark','Pockygom','invectiv#pmd','Filup','Bossoskills','ARA Ralphie#0016','Franchise#thee']}
+    },
+    results:{
+      "Appies":{1:{l:1,p:3},2:{l:1,p:4},3:{l:1,p:4},4:{l:1,p:1},5:{l:1,p:4},6:{l:1,p:8},7:{l:1,p:6},8:{l:1,p:6},9:{l:1,p:6},10:{l:1,p:1},11:{l:1,p:1}},
+      "Joe Bookmark":{1:{l:1,p:2},2:{l:1,p:6},3:{l:1,p:3},4:{l:1,p:5},5:{l:1,p:3},6:{l:1,p:3},7:{l:1,p:7},8:{l:1,p:4},9:{l:1,p:4},10:{l:1,p:4},11:{l:1,p:4}},
+      "Pockygom":{1:{l:1,p:1},2:{l:1,p:2},3:{l:1,p:7},4:{l:1,p:4},5:{l:1,p:6},6:{l:1,p:5},7:{l:1,p:3},8:{l:1,p:8},9:{l:1,p:3},10:{l:1,p:3},11:{l:1,p:8}},
+      "invectiv#pmd":{1:{l:1,p:5},2:{l:1,p:3},3:{l:1,p:2},4:{l:1,p:2},5:{l:1,p:8},6:{l:1,p:7},7:{l:1,p:8},8:{l:1,p:3},9:{l:1,p:5},10:{l:1,p:8},11:{l:1,p:2}},
+      "harmony#cinna":{1:{l:1,p:8},2:{l:1,p:5},3:{l:1,p:1},4:{l:1,p:7},5:{l:1,p:2}},
+      "DSFC chabo#dsfc":{1:{l:1,p:4},2:{l:1,p:7},3:{l:1,p:6},4:{l:1,p:6},5:{l:1,p:1}},
+      "alanxluc#1221":{1:{l:1,p:7},2:{l:1,p:1},3:{l:1,p:5},4:{l:1,p:8},5:{l:1,p:7}},
+      "Cool Guy Dom":{1:{l:1,p:6},2:{l:1,p:8},3:{l:1,p:8},4:{l:1,p:3},5:{l:1,p:5}},
+      "Filup":{1:{l:2,p:4},2:{l:2,p:4},3:{l:2,p:1},4:{l:2,p:2},5:{l:2,p:1},6:{l:1,p:1},7:{l:1,p:2},8:{l:1,p:7},9:{l:1,p:2},10:{l:1,p:6},11:{l:1,p:7}},
+      "Bossoskills":{1:{l:2,p:1},2:{l:2,p:1},3:{l:2,p:3},4:{l:2,p:7},5:{l:2,p:3},6:{l:1,p:2},7:{l:1,p:5},8:{l:1,p:5},9:{l:1,p:1},10:{l:1,p:7},11:{l:1,p:5}},
+      "ARA Ralphie#0016":{1:{l:2,p:3},2:{l:2,p:3},3:{l:2,p:4},4:{l:2,p:4},5:{l:2,p:4},6:{l:1,p:6},7:{l:1,p:1},8:{l:1,p:2},9:{l:1,p:8},10:{l:1,p:5},11:{l:1,p:6}},
+      "Franchise#thee":{1:{l:2,p:2},2:{l:2,p:6},3:{l:2,p:6},4:{l:2,p:1},5:{l:2,p:7},6:{l:1,p:4},7:{l:1,p:4},8:{l:1,p:1},9:{l:1,p:7},10:{l:1,p:2},11:{l:1,p:3}},
+      "BunniKillYa#NA1":{1:{l:2,p:8},2:{l:2,p:2},3:{l:2,p:7},4:{l:2,p:3},5:{l:2,p:5}},
+      "RamKev #NA1":{1:{l:2,p:7},2:{l:2,p:5},3:{l:2,p:2},4:{l:2,p:6},5:{l:2,p:6}},
+      "bloody#cool":{1:{l:2,p:6},2:{l:2,p:8},3:{l:2,p:8},4:{l:2,p:5},5:{l:2,p:2}},
+      "Gangly#NA1":{1:{l:2,p:5},2:{l:2,p:7},3:{l:2,p:5},4:{l:2,p:8},5:{l:2,p:8}}
+    }
+  }
 ];
 
 // ══════════════════════════════════════════════════════
@@ -1173,15 +1428,20 @@ function computeGlobal() {
           const others = active.filter(p => p !== name);
           const lobbyAvg = others.length ? others.reduce((s, p) => s + eff(p), 0) / others.length : BASELINE;
           const diff = eff(name) - lobbyAvg;
-          const mult = base >= 0
-            ? Math.max(0.65, Math.min(2.0, 1 - diff / 1200))   // gains:  underdog rewarded, favorite tempered
-            : Math.max(0.65, Math.min(1.4, 1 + diff / 1200));   // losses: underdog forgiven, favorite punished
-          const earned = Math.round(base * mult);
-          pending.push({ g, ln, tKey: t.key, tournName: t.name, name, placement, base, mult: +mult.toFixed(3), earned, diff: +diff.toFixed(1) });
+          // noElo tournaments: log for history/display but award 0 ELO
+          const mult = t.noElo ? null : (base >= 0
+            ? Math.max(0.65, Math.min(2.0, 1 - diff / 1200))
+            : Math.max(0.65, Math.min(1.4, 1 + diff / 1200)));
+          const earned = t.noElo ? 0 : Math.round(base * mult);
+          pending.push({ g, ln, tKey: t.key, tournName: t.name, name, placement, base, mult: mult !== null ? +mult.toFixed(3) : null, earned, diff: +diff.toFixed(1), noElo: !!t.noElo });
         });
       }
-      pending.forEach(e => { globalSt[e.name].rating += e.earned; globalSt[e.name].games += 1; globalSt[e.name].history.push(e); });
-      allLogs.push({ g, tKey: t.key, tournName: t.name, entries: pending });
+      pending.forEach(e => {
+        if (!e.noElo) globalSt[e.name].rating += e.earned;
+        globalSt[e.name].games += 1;
+        globalSt[e.name].history.push(e);
+      });
+      allLogs.push({ g, tKey: t.key, tournName: t.name, entries: pending, noElo: !!t.noElo });
     }
   }
   return { globalSt, allLogs };
@@ -1205,7 +1465,7 @@ const ACHIEVEMENTS = {
 const RARITY_ORDER = ['common','uncommon','rare','epic','legendary'];
 
 function computeAchievements(name, d) {
-  const hist = d.history;
+  const hist = d.history.filter(h => !h.noElo);
   if (!hist.length) return [];
   const earned = new Set();
   const placements = hist.map(h => h.placement);
@@ -1332,14 +1592,14 @@ function getLogs() {
 
 function playerList(st) {
   return Object.entries(st).map(([name, d]) => {
-    // delta = total points earned across the history entries in this view
     const earned = d.history.reduce((s, h) => s + h.earned, 0);
+    const eloGames = d.history.filter(h => !h.noElo);
     return {
       name, rating: Math.round(d.rating),
       change: earned,
-      games: d.history.length,
-      conf: Math.min(d.games / CONF_THRESH, 1),
-      placements: d.history.map(h => h.placement)
+      games: eloGames.length,
+      conf: Math.min(eloGames.length / CONF_THRESH, 1),
+      placements: eloGames.map(h => h.placement)
     };
   });
 }
@@ -1352,7 +1612,7 @@ function renderStatLeaders() {
   const MIN_GAMES = 15;
   const players = Object.entries(globalSt)
     .map(([name, d]) => {
-      const hist = d.history;
+      const hist = d.history.filter(h => !h.noElo);
       const games = hist.length;
       if (games < MIN_GAMES) return null;
       const placements = hist.map(h => h.placement);
@@ -1470,10 +1730,9 @@ function renderLeaderboard() {
     const dots = last5.map(pl => `<div class="l5dot l5d${pl}">${pl}</div>`).join('');
 
     // Sparkline: reconstruct rating after each of last 5 games
-    const hist = st[p.name]?.history || [];
+    const hist = st[p.name]?.history.filter(h => !h.noElo) || [];
     let run = BASELINE;
     const allRatings = hist.map(h => { run += h.earned; return Math.round(run); });
-    // Include baseline as starting point if we have history
     const ratingPoints = allRatings.length > 0 ? [BASELINE, ...allRatings].slice(-6) : [];
     const spark = buildSparkline(ratingPoints);
 
@@ -1523,8 +1782,8 @@ function renderGameLog() {
         return `<div class="lobby-row">
           <span class="lr-place ${pc}">${e.placement}</span>
           <span class="lr-name" title="${e.name}">${e.name}</span>
-          <span class="lr-pts" style="${ptsColor}">${ptsStr}</span>
-          <span class="lr-mult">(${e.base>=0?'+':''}${e.base}×${e.mult.toFixed(2)})</span>
+          <span class="lr-pts" style="${ptsColor}">${e.noElo ? '—' : ptsStr}</span>
+          <span class="lr-mult">${e.mult !== null ? `(${e.base>=0?'+':''}${e.base}×${e.mult.toFixed(2)})` : ''}</span>
         </div>`;
       }).join('');
       return `<div class="lobby-card"><div class="lobby-card-head">Lobby ${ln}</div>${rows}</div>`;
@@ -1539,6 +1798,9 @@ function renderGameLog() {
 
 function selectViewFromDropdown(sel) {
   currentView = sel.value;
+  const noEloNote = document.getElementById('noEloNote');
+  const t = TOURNAMENTS.find(t => t.key === currentView);
+  if (noEloNote) noEloNote.style.display = (t && t.noElo) ? 'block' : 'none';
   renderPodium();
   renderLeaderboard();
   renderGameLog();
@@ -1583,7 +1845,7 @@ function openProfile(playerName) {
   // ── Rating arc ──────────────────────────────────────
   let runRating = BASELINE;
   const ratingArc = [BASELINE];
-  hist.forEach(h => { runRating += h.earned; ratingArc.push(Math.round(runRating)); });
+  hist.forEach(h => { runRating += h.earned; if (!h.noElo) ratingArc.push(Math.round(runRating)); });
   const peakRating = Math.max(...ratingArc);
   const currentRating = Math.round(d.rating);
 
@@ -1604,7 +1866,8 @@ function openProfile(playerName) {
     const delta = t.entries.reduce((s, e) => s + e.earned, 0);
     const avg = (ps.reduce((s,p) => s+p, 0) / ps.length).toFixed(1);
     const best = Math.min(...ps);
-    return { ...t, ps, delta, avg, best, games: ps.length };
+    const isNoElo = t.entries.some(e => e.noElo);
+    return { ...t, ps, delta, avg, best, games: ps.length, noElo: isNoElo };
   });
 
   // ── Placement distribution ───────────────────────────
@@ -1683,13 +1946,17 @@ function openProfile(playerName) {
 
   // ── Tournament rows ───────────────────────────────────
   const tRows = tournRows.map(t => {
-    const dSign = t.delta >= 0 ? '+' : '';
-    const dCls = t.delta >= 0 ? 'tr-delta-pos' : 'tr-delta-neg';
     const dots = t.ps.map(p => `<div class="l5dot l5d${p}">${p}</div>`).join('');
+    const nameCell = t.noElo
+      ? `<span class="tr-name">${t.name}</span> <span style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--gray-400);vertical-align:middle" title="Invitational — does not count toward ELO">✦</span>`
+      : `<span class="tr-name">${t.name}</span>`;
+    const deltaCell = t.noElo
+      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--gray-300)">—</span>`
+      : (() => { const sign = t.delta >= 0 ? '+' : ''; const cls = t.delta >= 0 ? 'tr-delta-pos' : 'tr-delta-neg'; return `<span class="${cls}">${sign}${t.delta}</span>`; })();
     return `<tr>
-      <td><span class="tr-name">${t.name}</span></td>
+      <td>${nameCell}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--gray-400)">${t.games}g</td>
-      <td><span class="${dCls}">${dSign}${t.delta}</span></td>
+      <td>${deltaCell}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--gray-600)">${t.avg}</td>
       <td><div class="tr-placement-dots">${dots}</div></td>
     </tr>`;
